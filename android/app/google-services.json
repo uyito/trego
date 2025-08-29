@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "701530927205",
+    "project_id": "trego-fb4f3",
+    "storage_bucket": "trego-fb4f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701530927205:android:YOUR_ANDROID_APP_ID",
+        "android_client_info": {
+          "package_name": "com.health.trego"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "701530927205-YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6yHP3FIR-pKozm_yGOTyHAok8vF0GPCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "701530927205-YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+              "client_type": 2
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+} 
