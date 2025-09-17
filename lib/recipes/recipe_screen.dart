@@ -197,7 +197,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -229,11 +229,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           _errorMessage = null;
                         });
                         try {
-                          final aiRecipe = await _recipeService.generateRecipe(
-                            dietaryPreference: 'Balanced',
+                          final aiRecipe = await _recipeService.generateAIRecipe(
                             mealType: _selectedCategory,
-                            calories: 400,
-                            foodName: _searchController.text.isNotEmpty ? _searchController.text : null,
+                            targetCalories: 400,
+                            availableIngredients: _searchController.text.isNotEmpty ? [_searchController.text] : null,
                           );
                           setState(() {
                             _aiRecipe = aiRecipe;
@@ -295,10 +294,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
                       _errorMessage = null;
                     });
                     try {
-                      final aiRecipe = await _recipeService.generateRecipe(
-                        dietaryPreference: 'Balanced',
+                      final aiRecipe = await _recipeService.generateAIRecipe(
                         mealType: _selectedCategory,
-                        calories: 400,
+                        targetCalories: 400,
                       );
                       setState(() {
                         _aiRecipe = aiRecipe;
@@ -385,7 +383,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -516,7 +514,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -626,7 +624,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -717,7 +715,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),

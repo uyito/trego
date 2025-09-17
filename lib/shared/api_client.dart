@@ -9,7 +9,7 @@ class ApiClient {
   String? _authToken;
   
   static const String baseUrl = kDebugMode 
-      ? 'http://localhost:3000'
+      ? 'https://d7bb9d15fc13.ngrok-free.app/api'
       : 'https://api.trego.app';
 
   ApiClient._() {

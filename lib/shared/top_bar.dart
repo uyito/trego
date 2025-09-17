@@ -82,7 +82,7 @@ class _TopBarState extends State<TopBar>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -107,14 +107,14 @@ class _TopBarState extends State<TopBar>
                           height: 40,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFFE31E24).withOpacity(0.1),
+                            color: const Color(0xFFE31E24).withValues(alpha: 0.1),
                             border: Border.all(
-                              color: const Color(0xFFE31E24).withOpacity(0.3),
+                              color: const Color(0xFFE31E24).withValues(alpha: 0.3),
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFE31E24).withOpacity(0.2),
+                                color: const Color(0xFFE31E24).withValues(alpha: 0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

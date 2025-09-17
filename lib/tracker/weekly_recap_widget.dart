@@ -76,7 +76,7 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -99,7 +99,7 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -112,7 +112,7 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE31E24).withOpacity(0.1),
+                  color: const Color(0xFFE31E24).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(
@@ -168,7 +168,7 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE31E24).withOpacity(0.3),
+              color: const Color(0xFFE31E24).withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -181,7 +181,7 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(
@@ -278,7 +278,7 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
           label,
           style: TextStyle(
             fontSize: 7,
-            color: color.withOpacity(0.8),
+            color: color.withValues(alpha: 0.8),
           ),
         ),
       ],

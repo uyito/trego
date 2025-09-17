@@ -6,15 +6,13 @@ import 'package:trego/tdee/tdee_screen.dart';
 import 'package:trego/achievements/achievements_screen.dart';
 import 'package:trego/profile/profile_screen.dart';
 import 'package:trego/notifications/notifications_screen.dart';
-import 'package:trego/profile/profile_screen.dart';
-import 'package:trego/achievements/achievements_screen.dart';
 import 'package:trego/shared/top_bar.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  _MainNavigationState createState() => _MainNavigationState();
 }
 
 class _MainNavigationState extends State<MainNavigation>
@@ -99,7 +97,7 @@ class _MainNavigationState extends State<MainNavigation>
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -161,7 +159,7 @@ class _MainNavigationState extends State<MainNavigation>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: isSelected 
-              ? const Color(0xFFE31E24).withOpacity(0.1)
+              ? const Color(0xFFE31E24).withValues(alpha: 0.1)
               : Colors.transparent,
         ),
         child: Column(

@@ -31,21 +31,24 @@ class AuthService {
     });
   }
 
-  // Sync Firebase user with backend
+  // Sync Firebase user with backend using login endpoint
   Future<void> _syncWithBackend() async {
     try {
       final user = _auth.currentUser;
       if (user == null) return;
 
       final idToken = await user.getIdToken();
-      final response = await _apiClient.post('/api/auth/firebase-sync', data: {
+      
+      // Use the backend login endpoint to sync Firebase user
+      final response = await _apiClient.post('/auth/login', data: {
         'idToken': idToken,
+        'provider': 'firebase',
       });
 
-      if (response.data['success'] == true) {
+      if (response.data['success'] == true || response.data['token'] != null) {
         final backendToken = response.data['token'];
         await _apiClient.setAuthToken(backendToken);
-        print('Successfully synced with backend');
+        print('Successfully synced with backend using /auth/login');
       }
     } catch (e) {
       print('Failed to sync with backend: $e');
@@ -60,13 +63,24 @@ class AuthService {
     required String name,
   }) async {
     try {
+      // First, register with backend
+      await _apiClient.post('/auth/register', data: {
+        'email': email,
+        'password': password,
+        'name': name,
+      });
+
+      // Then create Firebase user
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Create user profile in Firestore
+      // Update Firebase profile
       if (result.user != null) {
+        await result.user!.updateDisplayName(name);
+        
+        // Create user profile in Firestore
         await _firestore.collection('users').doc(result.user!.uid).set({
           'name': name,
           'email': email,
@@ -74,7 +88,7 @@ class AuthService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
-        // Sync with backend
+        // Sync with backend to get JWT token
         await _syncWithBackend();
       }
 
@@ -90,12 +104,27 @@ class AuthService {
     required String password,
   }) async {
     try {
+      // Try backend login first for validation and JWT token
+      try {
+        final response = await _apiClient.post('/auth/login', data: {
+          'email': email,
+          'password': password,
+        });
+
+        if (response.data['token'] != null) {
+          await _apiClient.setAuthToken(response.data['token']);
+        }
+      } catch (backendError) {
+        print('Backend login failed, continuing with Firebase: $backendError');
+      }
+
+      // Sign in with Firebase
       final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Sync with backend after successful sign in
+      // Sync with backend using Firebase token if backend login failed
       if (result.user != null) {
         await _syncWithBackend();
       }
@@ -206,6 +235,9 @@ class AuthService {
         print('Firestore error (non-critical): $firestoreError');
         // Don't rethrow - user is still signed in, just profile wasn't saved
       }
+
+      // Sync with backend to get JWT token
+      await _syncWithBackend();
     }
 
     return userCredential;
@@ -254,6 +286,9 @@ class AuthService {
           print('Firestore error (non-critical): $firestoreError');
           // Don't rethrow - user is still signed in, just profile wasn't saved
         }
+
+        // Sync with backend to get JWT token
+        await _syncWithBackend();
       }
 
       return userCredential;
@@ -265,6 +300,17 @@ class AuthService {
   // Sign out from all providers
   Future<void> signOut() async {
     try {
+      // Notify backend of logout (optional - JWT will expire anyway)
+      try {
+        await _apiClient.post('/auth/logout');
+      } catch (e) {
+        print('Backend logout failed: $e');
+      }
+
+      // Clear backend token
+      await _apiClient.clearAuthToken();
+      
+      // Sign out from social providers
       await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {

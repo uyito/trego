@@ -25,45 +25,226 @@ class RecipeService {
     }
   }
 
-  // Generate recipe using backend API
-  Future<Map<String, dynamic>> generateRecipe({
-    required String dietaryPreference,
+  // Generate AI recipe using backend API
+  Future<Map<String, dynamic>> generateAIRecipe({
     required String mealType,
-    required int calories,
-    String? foodName,
-    String? ingredients,
-    List<String>? dietaryFilters,
-    List<String>? allergens,
-    String? cuisine,
-    int? cookingTime,
-    String? difficulty,
+    int? maxPrepTime,
+    int? targetCalories,
+    List<String>? dietaryRestrictions,
+    List<String>? availableIngredients,
+    String? cuisineType,
+    int? servings,
   }) async {
     try {
-      final response = await _apiClient.post('/api/recipes/generate', data: {
-        'dietaryPreference': dietaryPreference,
+      final response = await _apiClient.post('/recipes/generate-ai', data: {
         'mealType': mealType,
-        'calories': calories,
-        'ingredients': ingredients,
-        'allergens': allergens ?? [],
-        'cuisine': cuisine,
-        'cookingTime': cookingTime,
-        'difficulty': difficulty,
+        if (maxPrepTime != null) 'maxPrepTime': maxPrepTime,
+        if (targetCalories != null) 'targetCalories': targetCalories,
+        if (dietaryRestrictions != null && dietaryRestrictions.isNotEmpty)
+          'dietaryRestrictions': dietaryRestrictions,
+        if (availableIngredients != null && availableIngredients.isNotEmpty)
+          'availableIngredients': availableIngredients,
+        if (cuisineType != null) 'cuisineType': cuisineType,
+        if (servings != null) 'servings': servings,
       });
       
-      if (response.data['success'] == true) {
-        return response.data['recipe'];
+      if (response.data != null) {
+        return response.data;
       }
     } catch (e) {
-      print('Backend API call failed: $e');
+      print('Backend AI recipe generation failed: $e');
     }
     
     // Fallback to mock data
     return _generateMockRecipe(
-      dietaryPreference: dietaryPreference,
+      dietaryPreference: dietaryRestrictions?.first ?? 'Balanced',
       mealType: mealType,
-      calories: calories,
-      foodName: foodName,
+      calories: targetCalories ?? 500,
+      foodName: null,
     );
+  }
+
+  // Get personalized recipe recommendations
+  Future<List<Map<String, dynamic>>> getRecommendations({
+    int limit = 10,
+    String? mealType,
+  }) async {
+    try {
+      final response = await _apiClient.get('/recipes/recommendations', queryParameters: {
+        'limit': limit.toString(),
+        if (mealType != null) 'mealType': mealType,
+      });
+      
+      if (response.data != null && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Failed to get recipe recommendations: $e');
+    }
+    
+    return [];
+  }
+
+  // Search recipes
+  Future<List<Map<String, dynamic>>> searchRecipes({
+    String? query,
+    String? cuisine,
+    int? maxCalories,
+    String? difficulty,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        if (query != null && query.isNotEmpty) 'query': query,
+        if (cuisine != null) 'cuisine': cuisine,
+        if (maxCalories != null) 'maxCalories': maxCalories.toString(),
+        if (difficulty != null) 'difficulty': difficulty,
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      
+      final response = await _apiClient.get('/recipes/search', queryParameters: queryParams);
+      
+      if (response.data != null && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Recipe search failed: $e');
+    }
+    
+    return [];
+  }
+
+  // Generate recipe from pantry items
+  Future<Map<String, dynamic>?> generateFromPantry({
+    bool useExpiringItems = true,
+    int maxAdditionalIngredients = 3,
+    String? mealType,
+    int? prepTime,
+    String? difficulty,
+  }) async {
+    try {
+      final response = await _apiClient.post('/recipes/from-pantry', data: {
+        'useExpiringItems': useExpiringItems,
+        'maxAdditionalIngredients': maxAdditionalIngredients,
+        if (mealType != null) 'mealType': mealType,
+        if (prepTime != null) 'maxPrepTime': prepTime,
+        if (difficulty != null) 'difficulty': difficulty,
+      });
+      
+      if (response.data != null) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Pantry recipe generation failed: $e');
+    }
+    
+    return null;
+  }
+
+  // Save recipe
+  Future<bool> saveRecipeToBackend(String recipeId) async {
+    try {
+      final response = await _apiClient.post('/recipes/$recipeId/save', data: {});
+      return response.data?['success'] == true;
+    } catch (e) {
+      print('Failed to save recipe: $e');
+      return false;
+    }
+  }
+
+  // Rate recipe
+  Future<bool> rateRecipe(String recipeId, int rating) async {
+    try {
+      final response = await _apiClient.post('/recipes/$recipeId/rate', data: {
+        'rating': rating,
+      });
+      return response.data?['success'] == true;
+    } catch (e) {
+      print('Failed to rate recipe: $e');
+      return false;
+    }
+  }
+
+  // Mark recipe as made
+  Future<bool> markRecipeAsMade(String recipeId) async {
+    try {
+      final response = await _apiClient.post('/recipes/$recipeId/made', data: {});
+      return response.data?['success'] == true;
+    } catch (e) {
+      print('Failed to mark recipe as made: $e');
+      return false;
+    }
+  }
+
+  // Get meal plan suggestions
+  Future<Map<String, dynamic>?> getMealPlan({
+    int days = 7,
+    String? mealType,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'days': days.toString(),
+        if (mealType != null) 'mealType': mealType,
+      };
+      
+      final response = await _apiClient.get('/recipes/meal-plan', queryParameters: queryParams);
+      
+      if (response.data != null) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Failed to get meal plan: $e');
+    }
+    
+    return null;
+  }
+
+  // Get user's saved recipes
+  Future<List<Map<String, dynamic>>> getMySavedRecipes({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      
+      final response = await _apiClient.get('/recipes/my-recipes', queryParameters: queryParams);
+      
+      if (response.data != null && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Failed to get saved recipes: $e');
+    }
+    
+    return [];
+  }
+
+  // Get popular recipes
+  Future<List<Map<String, dynamic>>> getPopularRecipes({
+    int limit = 20,
+    String? category,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+        if (category != null) 'category': category,
+      };
+      
+      final response = await _apiClient.get('/recipes/popular', queryParameters: queryParams);
+      
+      if (response.data != null && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Failed to get popular recipes: $e');
+    }
+    
+    return [];
   }
 
   // Analyze nutrition using backend API
@@ -98,116 +279,6 @@ class RecipeService {
     return null;
   }
 
-  Future<Map<String, dynamic>?> _callOpenAI({
-    required String dietaryPreference,
-    required String mealType,
-    required int calories,
-    String? foodName,
-    String? ingredients,
-    List<String>? dietaryFilters,
-    List<String>? allergens,
-  }) async {
-    if (!ApiConfig.isRecipeAiEnabled) {
-      return null; // Skip API call if AI is disabled or no key provided
-    }
-
-    // Build dietary restrictions string
-    final dietaryRestrictions = <String>[];
-    if (dietaryFilters != null && dietaryFilters.isNotEmpty) {
-      dietaryRestrictions.addAll(dietaryFilters);
-    }
-    if (allergens != null && allergens.isNotEmpty) {
-      dietaryRestrictions.addAll(allergens.map((a) => 'no $a'));
-    }
-    final restrictionsString = dietaryRestrictions.isNotEmpty 
-        ? ' with restrictions: ${dietaryRestrictions.join(', ')}'
-        : '';
-
-    final prompt = ingredients != null && ingredients.isNotEmpty
-        ? '''
-Create a recipe using these available ingredients: $ingredients. 
-Make it $dietaryPreference$restrictionsString, under $calories calories.
-Format the output like this:  
-{
-  "title": "",
-  "calories": "",
-  "ingredients": [],
-  "steps": [],
-  "macros": {
-    "protein": "g",
-    "carbs": "g",
-    "fat": "g"
-  }
-}
-'''
-        : foodName != null && foodName.isNotEmpty
-        ? '''
-Give me a $dietaryPreference version of $foodName$restrictionsString, under $calories calories, including ingredients, steps, and macros.
-Format the output like this:  
-{
-  "title": "",
-  "calories": "",
-  "ingredients": [],
-  "steps": [],
-  "macros": {
-    "protein": "g",
-    "carbs": "g",
-    "fat": "g"
-  }
-}
-'''
-        : '''
-Generate a $mealType recipe that is $dietaryPreference$restrictionsString, around $calories calories per serving.  
-Format the output like this:  
-{
-  "title": "",
-  "calories": "",
-  "ingredients": [],
-  "steps": [],
-  "macros": {
-    "protein": "g",
-    "carbs": "g",
-    "fat": "g"
-  }
-}
-''';
-
-    final response = await http.post(
-      Uri.parse(ApiConfig.openaiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${ApiConfig.openaiApiKey}',
-      },
-      body: jsonEncode({
-        'model': ApiConfig.openaiModel,
-        'messages': [
-          {
-            'role': 'system',
-            'content': 'You are a culinary expert. Generate recipes in the exact JSON format requested.',
-          },
-          {
-            'role': 'user',
-            'content': prompt,
-          },
-        ],
-        'temperature': ApiConfig.temperature,
-        'max_tokens': ApiConfig.maxTokens,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final content = data['choices'][0]['message']['content'];
-      
-      // Extract JSON from the response
-      final jsonMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(content);
-      if (jsonMatch != null) {
-        return jsonDecode(jsonMatch.group(0)!);
-      }
-    }
-    
-    return null;
-  }
 
   Map<String, dynamic> _generateMockRecipe({
     required String dietaryPreference,

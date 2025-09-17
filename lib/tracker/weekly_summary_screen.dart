@@ -239,7 +239,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE31E24).withOpacity(0.3),
+                          color: const Color(0xFFE31E24).withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -257,7 +257,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -282,7 +282,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                       Text(
                                         'Your progress this week',
                                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -429,7 +429,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: color.withOpacity(0.8),
+            color: color.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -459,7 +459,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -521,7 +521,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE31E24).withOpacity(0.1),
+                    color: const Color(0xFFE31E24).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -621,7 +621,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF9800).withOpacity(0.9),
+                  color: const Color(0xFFFF9800).withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -643,13 +643,13 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     end: Alignment.topCenter,
                     colors: [
                       const Color(0xFFFF9800),
-                      const Color(0xFFFF9800).withOpacity(0.7),
+                      const Color(0xFFFF9800).withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF9800).withOpacity(0.3),
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -696,7 +696,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3).withOpacity(0.9),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -718,13 +718,13 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     end: Alignment.topCenter,
                     colors: [
                       const Color(0xFF2196F3),
-                      const Color(0xFF2196F3).withOpacity(0.7),
+                      const Color(0xFF2196F3).withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2196F3).withOpacity(0.3),
+                      color: const Color(0xFF2196F3).withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -771,7 +771,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C851).withOpacity(0.9),
+                  color: const Color(0xFF00C851).withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -793,13 +793,13 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     end: Alignment.topCenter,
                     colors: [
                       const Color(0xFF00C851),
-                      const Color(0xFF00C851).withOpacity(0.7),
+                      const Color(0xFF00C851).withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF00C851).withOpacity(0.3),
+                      color: const Color(0xFF00C851).withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -955,7 +955,7 @@ class WeightLineChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = const Color(0xFFE31E24).withOpacity(0.1)
+      ..color = const Color(0xFFE31E24).withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     final path = Path();

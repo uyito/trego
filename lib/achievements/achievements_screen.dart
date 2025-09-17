@@ -136,7 +136,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE31E24).withOpacity(0.3),
+                          color: const Color(0xFFE31E24).withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -154,7 +154,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -179,7 +179,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                                       Text(
                                         'Track your fitness milestones',
                                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -293,7 +293,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: color.withOpacity(0.9),
+            color: color.withValues(alpha: 0.9),
           ),
         ),
       ],
@@ -319,7 +319,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
           ),
           boxShadow: isSelected ? [
             BoxShadow(
-              color: const Color(0xFFE31E24).withOpacity(0.3),
+              color: const Color(0xFFE31E24).withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -353,8 +353,8 @@ class _AchievementsScreenState extends State<AchievementsScreen>
       child: Card(
         elevation: achievement.isEarned ? 8 : 2,
         shadowColor: achievement.isEarned 
-            ? const Color(0xFFE31E24).withOpacity(0.3)
-            : Colors.black.withOpacity(0.1),
+            ? const Color(0xFFE31E24).withValues(alpha: 0.3)
+            : Colors.black.withValues(alpha: 0.1),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -381,7 +381,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   height: 60,
                   decoration: BoxDecoration(
                     color: achievement.isEarned 
-                        ? Colors.white.withOpacity(0.2)
+                        ? Colors.white.withValues(alpha: 0.2)
                         : const Color(0xFFFAFAFA),
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -412,7 +412,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                   Text(
                     'Earned ${_formatDate(achievement.earnedAt!)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                     textAlign: TextAlign.center,
                   )
@@ -528,7 +528,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00C851).withOpacity(0.1),
+                          color: const Color(0xFF00C851).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -554,7 +554,7 @@ class _AchievementsScreenState extends State<AchievementsScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE31E24).withOpacity(0.1),
+                          color: const Color(0xFFE31E24).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(

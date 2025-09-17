@@ -109,8 +109,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: completed 
-                                ? const Color(0xFF00C851).withOpacity(0.1)
-                                : const Color(0xFFE31E24).withOpacity(0.1),
+                                ? const Color(0xFF00C851).withValues(alpha: 0.1)
+                                : const Color(0xFFE31E24).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(

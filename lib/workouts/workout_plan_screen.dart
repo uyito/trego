@@ -383,7 +383,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00C851).withOpacity(0.3),
+                          color: const Color(0xFF00C851).withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -401,7 +401,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -426,7 +426,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                       Text(
                                         'Stay consistent, stay strong',
                                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -559,7 +559,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: color.withOpacity(0.8),
+            color: color.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -623,12 +623,12 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: completed 
-            ? const Color(0xFF00C851).withOpacity(0.1)
+            ? const Color(0xFF00C851).withValues(alpha: 0.1)
             : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: completed 
-              ? const Color(0xFF00C851).withOpacity(0.3)
+              ? const Color(0xFF00C851).withValues(alpha: 0.3)
               : const Color(0xFFE5E5E5),
           width: 1,
         ),
@@ -645,7 +645,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                   decoration: BoxDecoration(
                     color: completed 
                         ? const Color(0xFF00C851)
-                        : const Color(0xFFE31E24).withOpacity(0.1),
+                        : const Color(0xFFE31E24).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(

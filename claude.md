@@ -1,97 +1,200 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Trego - Flutter Fitness & Nutrition Companion
 
-Trego is a comprehensive Flutter mobile application designed to help users track their fitness journey, manage nutrition, and achieve their health goals. The app integrates with Firebase for authentication and real-time data synchronization.
+Trego is a comprehensive Flutter mobile application with a Spring Boot backend for fitness tracking, nutrition management, and health monitoring. The app features Firebase integration, AI-powered recommendations, and real-time progress tracking.
 
-## What the App Does
+## Architecture Overview
 
-### Core Functionality
+This is a **hybrid project** containing both Flutter frontend and Spring Boot backend:
 
-**Fitness Tracking**
-- **Dashboard**: Central hub displaying daily metrics including calories consumed, water intake, distance traveled, and workout streaks
-- **Run Tracking**: GPS-enabled live run tracking with distance, pace, and route mapping using Google Maps
-- **Workout Planning**: Custom workout plans with exercise libraries and progress tracking
-- **Achievement System**: Gamified experience with badges and milestones to motivate users
+### Frontend (Flutter)
+- **Location**: Root directory (`/lib/`)
+- **Framework**: Flutter 3.6+ with Dart SDK ^3.6.1
+- **State Management**: Provider pattern with StatefulWidgets
+- **Theme**: Material Design 3 with custom Nike-inspired theme (red, green, black)
+- **Database**: Firebase Firestore for real-time data sync
+- **Authentication**: Firebase Auth with social sign-in (Google, Apple)
 
-**Nutrition Management**
-- **TDEE Calculator**: Calculate Total Daily Energy Expenditure based on age, gender, height, weight, activity level, and goals
-- **Recipe Management**: AI-powered recipe generation using OpenAI API based on dietary preferences, meal types, and calorie targets
-- **Calorie Tracking**: Daily calorie intake monitoring with goals and progress visualization
+### Backend (Spring Boot)
+- **Location**: `/backend/` directory
+- **Framework**: Spring Boot 3.2.0 with Java 17
+- **Database**: Firebase Firestore (no traditional SQL database)
+- **Authentication**: Firebase Auth + JWT tokens + Spring Security
+- **Build Tool**: Maven with wrapper (`./mvnw`)
+- **External APIs**: OpenAI for AI features, Stripe for premium features
 
-**Health Monitoring**
-- **Water Intake Tracking**: Daily hydration goals with visual progress indicators
-- **Weight Tracking**: Historical weight data with trends and goal setting
-- **Weekly Summaries**: Comprehensive weekly recaps showing progress across all metrics
+## Key Development Commands
 
-### Technical Architecture
+### Flutter Frontend Commands
+```bash
+# Run the Flutter app
+flutter run
 
-**Frontend (Flutter)**
-- Material Design 3 with custom Nike-inspired theme (red, green, black color scheme)
-- Cross-platform support (iOS, Android, Web)
-- Animated UI components with smooth transitions
-- Responsive design with proper state management
+# Run on specific platform
+flutter run -d chrome   # Web
+flutter run -d android  # Android
+flutter run -d ios      # iOS
 
-**Backend Integration**
-- **Firebase Authentication**: Email/password, Google Sign-In, Apple Sign-In
-- **Cloud Firestore**: Real-time database for user data, workout logs, recipes, and progress tracking
-- **Firebase Analytics**: User behavior tracking and app performance monitoring
+# Install dependencies
+flutter pub get
 
-**Key Features**
-- **GPS Integration**: Real-time location tracking for runs using Geolocator
-- **Camera Integration**: Photo capture for recipe scanning and progress photos
-- **Push Notifications**: Local notifications for workout reminders and goal achievements
-- **Health Kit Integration**: Access to device health data (iOS Health app, Android health sensors)
-- **Maps Integration**: Google Maps for route visualization and tracking
+# Build for production
+flutter build apk          # Android APK
+flutter build appbundle    # Android App Bundle
+flutter build ios          # iOS
+flutter build web          # Web
 
-### Main Screens
+# Testing and linting
+flutter test               # Run tests
+flutter test --coverage   # Run with coverage
+flutter analyze           # Static analysis
+```
 
-1. **Dashboard**: Main hub with daily metrics, quick actions, and progress overview
-2. **Workout Plans**: Exercise library, custom workout creation, and progress tracking
-3. **Recipes**: AI-generated recipes based on nutritional needs and preferences
-4. **TDEE Calculator**: Comprehensive metabolic rate calculation and goal setting
-5. **Profile**: User settings, achievements, and account management
-6. **Run Tracker**: Live GPS tracking with real-time metrics and route mapping
+### Spring Boot Backend Commands
+```bash
+# Navigate to backend directory first
+cd backend
 
-### Data Models
+# Run the backend API
+./mvnw spring-boot:run
 
-**User Data**
-- Personal information (age, gender, height, weight)
-- Fitness goals and preferences
-- TDEE calculations and calorie targets
-- Achievement progress and workout streaks
+# Run with specific profile
+./mvnw spring-boot:run -Dspring-boot.run.profiles=development
 
-**Tracking Data**
-- Daily logs (calories, water, workouts, measurements)
-- Run history with GPS data and performance metrics
-- Weekly and monthly progress summaries
-- Recipe favorites and meal plans
+# Testing
+./mvnw test                    # Run all tests
+./mvnw test -Dtest=ClassName   # Run specific test class
+./mvnw verify                  # Run integration tests
 
-### Technology Stack
+# Build for production
+./mvnw clean package           # Build JAR
+./mvnw clean package -DskipTests  # Build without tests
 
-- **Framework**: Flutter 3.6+ with Dart
-- **State Management**: StatefulWidgets with AnimationControllers
-- **Database**: Firebase Cloud Firestore
-- **Authentication**: Firebase Auth with social sign-in
-- **Maps**: Google Maps Flutter plugin
-- **HTTP**: HTTP package for API calls
-- **AI Integration**: OpenAI API for recipe generation
-- **Local Storage**: Device preferences and cached data
+# Docker deployment
+docker-compose up --build      # Full stack with monitoring
+```
 
-### Development Setup
+## Project Structure
 
-The app requires:
-- Flutter SDK (latest stable)
-- Firebase project with Authentication and Firestore enabled
-- Google Maps API key
-- OpenAI API key (optional, has mock data fallback)
-- Platform-specific configuration files (google-services.json for Android, GoogleService-Info.plist for iOS)
+### Flutter App Structure
+```
+/lib/
+├── auth/                    # Authentication screens and services
+├── achievements/            # Achievement system and badges
+├── navigation/             # Main app navigation
+├── personalization/        # AI-powered recommendations
+├── profile/               # User profile and settings
+├── recipes/               # Recipe management and AI generation
+├── shared/                # Common utilities, themes, API clients
+├── social/                # Social features and challenges
+├── tdee/                  # TDEE calculator
+├── tracker/               # Run tracking and fitness monitoring
+├── workouts/              # Workout plans and exercise library
+└── widgets/               # Reusable UI components
+```
 
-### App Flow
+### Backend Structure
+```
+backend/src/main/java/com/trego/
+├── TregoApplication.java    # Main Spring Boot application
+├── config/                 # Firebase and security configuration
+├── controller/             # REST API endpoints
+├── dto/                   # Data Transfer Objects
+├── model/                 # Entity models (User, UserProfile, etc.)
+├── repository/            # Firestore data access layer
+├── security/              # Firebase Auth + JWT integration
+└── service/               # Business logic services
+```
 
-1. **Authentication**: Users sign up/login via email or social providers
-2. **Onboarding**: Initial profile setup and goal configuration
-3. **Dashboard**: Daily tracking hub with quick access to all features
-4. **Activity Tracking**: Log workouts, runs, meals, and measurements
-5. **Progress Monitoring**: View trends, achievements, and weekly summaries
-6. **Goal Adjustment**: Update targets based on progress and preferences
+## Configuration Files
 
-The app follows a modular architecture with separate services for each feature domain (auth, tracking, workouts, recipes, etc.) and shared utilities for common functionality like themes, notifications, and Firebase configuration.
+### Firebase Setup
+- **Backend**: Requires `backend/config/firebase-credentials.json` (service account key)
+- **Frontend**: Platform-specific config files already included:
+  - Android: `android/app/google-services.json`
+  - iOS: `ios/Runner/GoogleService-Info.plist`
+
+### Environment Variables
+Backend requires `.env` file in `backend/` directory with:
+- `FIREBASE_PROJECT_ID`, `FIREBASE_CREDENTIALS_PATH`
+- `JWT_SECRET`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`
+- See `backend/.env.example` for complete list
+
+## Key Integration Points
+
+### Flutter ↔ Backend Communication
+- **API Client**: `lib/shared/api_client.dart` handles HTTP requests
+- **Base URL**: Configured in `lib/shared/api_config.dart`
+- **Authentication**: Firebase tokens are sent to backend for validation
+- **Data Flow**: Flutter → Firebase Auth → Backend JWT validation → Firestore
+
+### Firebase Integration
+- **Authentication**: Shared between Flutter (client-side) and Spring Boot (server-side validation)
+- **Database**: Firestore is accessed directly from Flutter and through backend services
+- **Real-time**: Flutter uses Firestore streams for live data updates
+
+## Testing Strategy
+
+### Flutter Testing
+- **Unit Tests**: Service layer testing in `test/` directory
+- **Widget Tests**: UI component testing with `flutter_test`
+- **Integration**: End-to-end testing for critical user flows
+
+### Backend Testing
+- **Unit Tests**: Service and controller testing with JUnit
+- **Integration Tests**: Full API testing with TestContainers
+- **Security Tests**: Authentication and authorization testing
+
+## Development Workflow
+
+### Working with Both Systems
+1. **Backend First**: Start backend API for testing: `cd backend && ./mvnw spring-boot:run`
+2. **Frontend Development**: Run Flutter app: `flutter run`
+3. **API Testing**: Backend runs on `http://localhost:8080/api`
+4. **Database**: Monitor Firestore through Firebase Console
+
+### Key Architectural Patterns
+- **Repository Pattern**: Used in backend for Firestore access
+- **Service Layer**: Business logic separation in both Flutter and Spring Boot
+- **DTO Pattern**: Data transfer between frontend/backend via standardized objects
+- **Provider Pattern**: Flutter state management using Provider package
+
+## Firebase Firestore Collections
+- `users/` - User profiles and authentication data
+- `users/{uid}/workouts/` - User workout logs and plans
+- `users/{uid}/recipes/` - Saved recipes and meal plans
+- `users/{uid}/tracking/` - Daily progress and metrics
+- `users/{uid}/achievements/` - Unlocked achievements and badges
+
+## Production Deployment
+
+### Flutter Deployment
+- **Android**: Build signed APK/AAB for Play Store
+- **iOS**: Build through Xcode for App Store
+- **Web**: Deploy built files to hosting service
+
+### Backend Deployment
+- **Docker**: Full production stack with `docker-compose.yml`
+- **Monitoring**: Included Prometheus, Grafana, and health checks
+- **Scaling**: Horizontal scaling via Docker Compose
+
+## Important Notes for Development
+
+### Firebase Rules
+- Firestore security rules are crucial for data protection
+- Users can only access their own data (`users/{uid}/`)
+- Backend service account has elevated permissions for cross-user operations
+
+### API Integration
+- Flutter communicates with backend through REST APIs
+- Authentication flow: Firebase Auth → Custom JWT for backend
+- Error handling implemented in `lib/widgets/error_handler_widget.dart`
+
+### Performance Considerations
+- Use Firestore offline persistence for Flutter
+- Implement proper pagination for large datasets
+- Cache frequently accessed data in Flutter providers
+- Backend includes rate limiting and monitoring

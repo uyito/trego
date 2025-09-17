@@ -8,7 +8,7 @@ class ErrorHandlerWidget extends StatefulWidget {
   const ErrorHandlerWidget({super.key, required this.child});
 
   @override
-  State<ErrorHandlerWidget> createState() => _ErrorHandlerWidgetState();
+  _ErrorHandlerWidgetState createState() => _ErrorHandlerWidgetState();
 }
 
 class _ErrorHandlerWidgetState extends State<ErrorHandlerWidget> {
@@ -114,9 +114,12 @@ class _ErrorHandlerWidgetState extends State<ErrorHandlerWidget> {
           children: [
             const Icon(Icons.cloud_off, color: Colors.white, size: 16),
             const SizedBox(width: 8),
-            const Text(
-              'Server connection issues',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            Flexible(
+              child: const Text(
+                'Server connection issues',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(width: 8),
             GestureDetector(

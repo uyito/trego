@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:trego/auth/auth_service.dart';
 import 'package:trego/tracker/tracker_service.dart';
 import 'package:trego/tracker/weekly_summary_screen.dart';
-import 'package:trego/tracker/run_tracker_screen.dart';
 import 'package:trego/achievements/achievement_service.dart';
-import 'package:trego/workouts/workout_screen.dart';
 import 'package:trego/tracker/weekly_recap_widget.dart';
 import 'package:trego/tracker/live_run_tracker_screen.dart';
 import 'package:trego/tracker/run_service.dart';
@@ -354,7 +352,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFE31E24).withOpacity(0.3),
+                                    color: const Color(0xFFE31E24).withValues(alpha: 0.3),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -390,7 +388,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                                   ? 'Keep the momentum going!'
                                                   : 'Begin your fitness journey today',
                                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                color: Colors.white.withOpacity(0.9),
+                                                color: Colors.white.withValues(alpha: 0.9),
                                               ),
                                             ),
                                           ],
@@ -552,7 +550,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                             Container(
                                               padding: const EdgeInsets.all(12),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFFFD700).withOpacity(0.1),
+                                                color: const Color(0xFFFFD700).withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                               child: const Icon(
@@ -681,7 +679,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: color.withOpacity(0.9),
+            color: color.withValues(alpha: 0.9),
           ),
         ),
       ],
@@ -711,7 +709,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -783,7 +781,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: progress.clamp(0.0, 1.0),
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha: 0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(4),

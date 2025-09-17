@@ -26,59 +26,176 @@ class WorkoutService {
     return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
   }
 
-  // Generate single workout using backend API
-  Future<Map<String, dynamic>?> generateWorkout({
-    required String fitnessLevel,
-    required List<String> goals,
-    required int duration,
-    required List<String> equipment,
-    List<String>? preferences,
-    List<String>? focusAreas,
+  // Generate AI workout using backend API
+  Future<Map<String, dynamic>?> generateAIWorkout({
+    required String workoutType,
+    List<String>? targetMuscleGroups,
+    int? duration,
+    List<String>? equipment,
+    String? difficulty,
+    String? focus,
+    int? timeAvailable,
+    List<String>? injuryConsiderations,
+    String? energyLevel,
+    String? location,
   }) async {
     try {
-      final response = await _apiClient.post('/api/workouts/generate', data: {
-        'fitnessLevel': fitnessLevel,
-        'goals': goals,
-        'duration': duration,
-        'equipment': equipment,
-        'preferences': preferences ?? [],
-        'focusAreas': focusAreas ?? [],
+      final response = await _apiClient.post('/workouts/generate-ai', data: {
+        'preferences': {
+          'workoutType': workoutType,
+          if (targetMuscleGroups != null) 'targetMuscleGroups': targetMuscleGroups,
+          if (duration != null) 'duration': duration,
+          if (equipment != null) 'equipment': equipment,
+          if (difficulty != null) 'difficulty': difficulty,
+          if (focus != null) 'focus': focus,
+        },
+        'constraints': {
+          if (timeAvailable != null) 'timeAvailable': timeAvailable,
+          if (injuryConsiderations != null) 'injuryConsiderations': injuryConsiderations,
+          if (energyLevel != null) 'energyLevel': energyLevel,
+          if (location != null) 'location': location,
+        }
       });
       
-      if (response.data['success'] == true) {
-        return response.data['workout'];
+      if (response.data != null) {
+        return response.data;
       }
     } catch (e) {
-      print('Workout generation failed: $e');
+      print('AI workout generation failed: $e');
     }
     
     return null;
   }
 
-  // Complete workout using backend API
-  Future<bool> completeWorkout({
-    String? workoutId,
-    required int duration,
-    required List<Map<String, dynamic>> exercises,
-    int? caloriesBurned,
-    String? difficulty,
+  // Start workout session
+  Future<Map<String, dynamic>?> startWorkoutSession({
+    required String workoutPlanId,
+    String? sessionName,
+    Map<String, dynamic>? location,
+    bool enableGPS = false,
+    bool enableHeartRate = false,
+  }) async {
+    try {
+      final response = await _apiClient.post('/workouts/sessions/start', data: {
+        'workoutPlanId': workoutPlanId,
+        if (sessionName != null) 'sessionName': sessionName,
+        if (location != null) 'location': location,
+        'enableGPS': enableGPS,
+        'enableHeartRateTracking': enableHeartRate,
+      });
+      
+      if (response.data != null) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Failed to start workout session: $e');
+    }
+    
+    return null;
+  }
+
+  // Log exercise set
+  Future<bool> logExerciseSet({
+    required String sessionId,
+    required String exerciseId,
+    required int setNumber,
+    int? reps,
+    double? weight,
+    int? duration,
+    double? distance,
+    int? restTime,
+    int? rpe,
     String? notes,
   }) async {
     try {
-      final response = await _apiClient.post('/api/workouts/complete', data: {
-        'workoutId': workoutId,
-        'duration': duration,
-        'exercises': exercises,
-        'caloriesBurned': caloriesBurned,
-        'difficulty': difficulty,
-        'notes': notes,
+      final response = await _apiClient.post('/workouts/sessions/$sessionId/exercises/$exerciseId/sets', data: {
+        'setNumber': setNumber,
+        if (reps != null) 'reps': reps,
+        if (weight != null) 'weight': weight,
+        if (duration != null) 'duration': duration,
+        if (distance != null) 'distance': distance,
+        if (restTime != null) 'restTime': restTime,
+        if (rpe != null) 'rpe': rpe,
+        if (notes != null) 'notes': notes,
       });
       
-      return response.data['success'] == true;
+      return response.data?['success'] == true;
     } catch (e) {
-      print('Workout completion failed: $e');
+      print('Failed to log exercise set: $e');
       return false;
     }
+  }
+
+  // End workout session
+  Future<Map<String, dynamic>?> endWorkoutSession({
+    required String sessionId,
+    String? mood,
+    int? perceivedExertion,
+    String? notes,
+    int? actualDuration,
+    List<String>? photos,
+  }) async {
+    try {
+      final response = await _apiClient.post('/workouts/sessions/$sessionId/end', data: {
+        if (mood != null) 'mood': mood,
+        if (perceivedExertion != null) 'perceivedExertion': perceivedExertion,
+        if (notes != null) 'notes': notes,
+        if (actualDuration != null) 'actualDuration': actualDuration,
+        if (photos != null) 'photos': photos,
+      });
+      
+      if (response.data != null) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Failed to end workout session: $e');
+    }
+    
+    return null;
+  }
+
+  // Get user workout history
+  Future<List<Map<String, dynamic>>> getWorkoutHistory({
+    int page = 1,
+    int limit = 20,
+    String? workoutType,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+        if (workoutType != null) 'workoutType': workoutType,
+      };
+      
+      final response = await _apiClient.get('/workouts/history', queryParameters: queryParams);
+      
+      if (response.data != null && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Failed to get workout history: $e');
+    }
+    
+    return [];
+  }
+
+  // Get workout statistics
+  Future<Map<String, dynamic>?> getWorkoutStats({
+    String period = 'month', // week, month, year
+  }) async {
+    try {
+      final response = await _apiClient.get('/workouts/stats', queryParameters: {
+        'period': period,
+      });
+      
+      if (response.data != null) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Failed to get workout stats: $e');
+    }
+    
+    return null;
   }
 
   // Generate workout plan (fallback method)
@@ -97,73 +214,6 @@ class WorkoutService {
     );
   }
 
-  Future<List<Map<String, dynamic>>?> _callOpenAI({
-    required String fitnessGoal,
-    required String experienceLevel,
-    required int workoutDays,
-    required bool hasGymAccess,
-  }) async {
-    if (!ApiConfig.isWorkoutAiEnabled) {
-      return null; // Skip API call if AI is disabled or no key provided
-    }
-
-    final prompt = '''
-Generate a weekly workout plan for a $experienceLevel user who wants to $fitnessGoal.  
-They can work out $workoutDays days per week and ${hasGymAccess ? 'has' : 'does not have'} access to a gym.  
-Format the output like this:
-{
-  "days": [
-    {
-      "day": "Monday",
-      "focus": "Upper Body Strength",
-      "exercises": [
-        "Push-Ups - 3 sets of 15",
-        "Dumbbell Press - 3 sets of 12",
-        ...
-      ]
-    },
-    ...
-  ]
-}
-''';
-
-    final response = await http.post(
-      Uri.parse(ApiConfig.openaiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${ApiConfig.openaiApiKey}',
-      },
-      body: jsonEncode({
-        'model': ApiConfig.openaiModel,
-        'messages': [
-          {
-            'role': 'system',
-            'content': 'You are a fitness expert. Generate workout plans in the exact JSON format requested.',
-          },
-          {
-            'role': 'user',
-            'content': prompt,
-          },
-        ],
-        'temperature': ApiConfig.temperature,
-        'max_tokens': ApiConfig.maxTokens,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final content = data['choices'][0]['message']['content'];
-      
-      // Extract JSON from the response
-      final jsonMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(content);
-      if (jsonMatch != null) {
-        final workoutData = jsonDecode(jsonMatch.group(0)!);
-        return List<Map<String, dynamic>>.from(workoutData['days']);
-      }
-    }
-    
-    return null;
-  }
 
   List<Map<String, dynamic>> _generateMockWorkoutPlan({
     required String fitnessGoal,

@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Primary Colors
+  // Nike-inspired Primary Colors
   static const Color primaryRed = Color(0xFFE31E24);
   static const Color primaryRedDark = Color(0xFFC62828);
+  static const Color nikeOrange = Color(0xFFFF6900);
+  static const Color primaryOrange = Color(0xFFFF6900);
   static const Color primaryGreen = Color(0xFF00C851);
-  static const Color primaryOrange = Color(0xFFFF9800);
-  static const Color primaryBlue = Color(0xFF2196F3);
-  static const Color primaryPurple = Color(0xFF9C27B0);
+  static const Color primaryBlue = Color(0xFF0064D2);
+  static const Color primaryPurple = Color(0xFF7B2CBF);
+  static const Color primaryBlack = Color(0xFF111111);
+  static const Color charcoalBlack = Color(0xFF1C1C1E);
+  static const Color primaryWhite = Color(0xFFFFFFFF);
+  
+  // Nike specific activity colors
+  static const Color workoutYellow = Color(0xFFFFD60A);
+  static const Color recoveryBlue = Color(0xFF007AFF);
+  static const Color runningPurple = Color(0xFF7B2CBF);
 
   // Neutral Colors
   static const Color background = Color(0xFFFAFAFA);
@@ -33,7 +42,7 @@ class AppTheme {
   static const LinearGradient warningGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primaryOrange, Color(0xFFF57C00)],
+    colors: [nikeOrange, Color(0xFFF57C00)],
   );
 
   static const LinearGradient infoGradient = LinearGradient(
@@ -51,7 +60,7 @@ class AppTheme {
   // Shadows
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: Colors.black.withOpacity(0.08),
+      color: Colors.black.withValues(alpha: 0.08),
       blurRadius: 20,
       offset: const Offset(0, 8),
     ),
@@ -59,7 +68,7 @@ class AppTheme {
 
   static List<BoxShadow> get buttonShadow => [
     BoxShadow(
-      color: primaryRed.withOpacity(0.3),
+      color: primaryRed.withValues(alpha: 0.3),
       blurRadius: 15,
       offset: const Offset(0, 5),
     ),
@@ -67,7 +76,7 @@ class AppTheme {
 
   static List<BoxShadow> get floatingShadow => [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Colors.black.withValues(alpha: 0.1),
       blurRadius: 10,
       offset: const Offset(0, 2),
     ),
@@ -155,7 +164,7 @@ class AppTheme {
     backgroundColor: primaryRed,
     foregroundColor: Colors.white,
     elevation: 0,
-    shadowColor: primaryRed.withOpacity(0.3),
+    shadowColor: primaryRed.withValues(alpha: 0.3),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radiusMedium),
     ),

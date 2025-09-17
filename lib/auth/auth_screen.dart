@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trego/auth/auth_service.dart';
 
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});

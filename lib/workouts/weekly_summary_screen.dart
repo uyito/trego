@@ -203,7 +203,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                 Container(
                                   padding: const EdgeInsets.all(AppTheme.spacingM),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                                   ),
                                   child: const Icon(
@@ -226,7 +226,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                       Text(
                                         'Your fitness journey continues',
                                         style: AppTheme.bodyMedium.copyWith(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -253,7 +253,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                           height: 120,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Colors.white.withOpacity(0.2),
+                                            color: Colors.white.withValues(alpha: 0.2),
                                           ),
                                         ),
                                         // Progress circle
@@ -263,7 +263,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                           child: CircularProgressIndicator(
                                             value: _completionRate * _progressAnimation.value,
                                             strokeWidth: 8,
-                                            backgroundColor: Colors.white.withOpacity(0.3),
+                                            backgroundColor: Colors.white.withValues(alpha: 0.3),
                                             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                                           ),
                                         ),
@@ -281,7 +281,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                             Text(
                                               'Complete',
                                               style: AppTheme.bodySmall.copyWith(
-                                                color: Colors.white.withOpacity(0.9),
+                                                color: Colors.white.withValues(alpha: 0.9),
                                               ),
                                             ),
                                           ],
@@ -405,13 +405,13 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
+            color.withValues(alpha: 0.1),
+            color.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -472,7 +472,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                 color: isCompleted 
                     ? AppTheme.primaryGreen
                     : isToday 
-                        ? AppTheme.primaryRed.withOpacity(0.1)
+                        ? AppTheme.primaryRed.withValues(alpha: 0.1)
                         : AppTheme.divider,
                 border: isToday 
                     ? Border.all(color: AppTheme.primaryRed, width: 2)
@@ -571,13 +571,13 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              achievement['color'].withOpacity(0.1),
-              achievement['color'].withOpacity(0.05),
+              achievement['color'].withValues(alpha: 0.1),
+              achievement['color'].withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           border: Border.all(
-            color: achievement['color'].withOpacity(0.2),
+            color: achievement['color'].withValues(alpha: 0.2),
             width: 1,
           ),
         ),

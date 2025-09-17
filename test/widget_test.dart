@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:trego/main.dart';
+import 'package:trego/app.dart';
 
 void main() {
   testWidgets('Trego app smoke test', (WidgetTester tester) async {

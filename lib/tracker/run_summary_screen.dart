@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:trego/tracker/run_model.dart' as run_model;
-import 'package:trego/tracker/run_service.dart';
-import 'package:trego/achievements/achievement_service.dart';
-import 'package:trego/auth/auth_service.dart';
 
 class RunSummaryScreen extends StatefulWidget {
   final run_model.Run run;
@@ -160,7 +157,7 @@ class _RunSummaryScreenState extends State<RunSummaryScreen>
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -178,7 +175,7 @@ class _RunSummaryScreenState extends State<RunSummaryScreen>
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -359,10 +356,10 @@ class _RunSummaryScreenState extends State<RunSummaryScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             width: 1,
           ),
         ),

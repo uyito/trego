@@ -341,7 +341,7 @@ class _LiveRunTrackerScreenState extends State<LiveRunTrackerScreen>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppTheme.primaryRed.withOpacity(0.1),
+                  AppTheme.primaryRed.withValues(alpha: 0.1),
                   AppTheme.background,
                 ],
               ),
@@ -540,13 +540,13 @@ class _LiveRunTrackerScreenState extends State<LiveRunTrackerScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
+            color.withValues(alpha: 0.1),
+            color.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -593,7 +593,7 @@ class _LiveRunTrackerScreenState extends State<LiveRunTrackerScreen>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),

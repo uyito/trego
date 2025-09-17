@@ -349,7 +349,7 @@ class _RunTrackerScreenState extends State<RunTrackerScreen>
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -410,7 +410,7 @@ class _RunTrackerScreenState extends State<RunTrackerScreen>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -472,7 +472,7 @@ class _RunTrackerScreenState extends State<RunTrackerScreen>
                         backgroundColor: _isRunning ? const Color(0xFFE31E24) : const Color(0xFF00C851),
                         foregroundColor: Colors.white,
                         elevation: 8,
-                        shadowColor: (_isRunning ? const Color(0xFFE31E24) : const Color(0xFF00C851)).withOpacity(0.3),
+                        shadowColor: (_isRunning ? const Color(0xFFE31E24) : const Color(0xFF00C851)).withValues(alpha: 0.3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),

@@ -371,7 +371,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> with Sing
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Center(
