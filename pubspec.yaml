@@ -58,6 +58,7 @@ dependencies:
   
   # Local notifications
   flutter_local_notifications: ^19.3.0
+  timezone: ^0.10.1
   
   # GPS and location services
   geolocator: ^10.1.0
@@ -73,6 +74,9 @@ dependencies:
   camera: ^0.10.5+9
   image_picker: ^1.0.7
   permission_handler: ^11.3.0
+  
+  # Network connectivity monitoring
+  connectivity_plus: ^6.0.5
 
 dev_dependencies:
   flutter_test:

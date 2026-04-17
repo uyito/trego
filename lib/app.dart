@@ -3,6 +3,17 @@ import 'package:provider/provider.dart';
 import 'providers/app_state_provider.dart';
 import 'providers/loading_provider.dart';
 import 'widgets/error_handler_widget.dart';
+import 'shared/connectivity_status_widget.dart';
+import 'shared/alert_service.dart';
+import 'shared/realtime_notification_manager.dart';
+import 'shared/notification_settings_screen.dart';
+import 'auth/login_screen.dart';
+import 'auth/register_screen.dart';
+import 'workouts/workout_hub.dart';
+import 'tracker/tracker_hub.dart';
+import 'recipes/recipe_screen.dart';
+import 'personalization/for_you_hub.dart';
+import 'social/social_hub.dart';
 
 class TregoApp extends StatelessWidget {
   const TregoApp({super.key});
@@ -112,11 +123,7 @@ class TregoApp extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to auth screen
-                    // For now, just show a placeholder
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Auth screen coming soon!')),
-                    );
+                    Navigator.pushNamed(context, '/register');
                   },
                   child: const Text('Get Started'),
                 ),
@@ -124,9 +131,7 @@ class TregoApp extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Sign in screen coming soon!')),
-                  );
+                  Navigator.pushNamed(context, '/login');
                 },
                 child: const Text('Already have an account? Sign In'),
               ),
@@ -138,17 +143,68 @@ class TregoApp extends StatelessWidget {
   }
 
   Widget _buildMainScreen(BuildContext context) {
+    return InAppAlertWidget(
+      child: ConnectivityStatusWidget(
+        child: _MainScreenContent(),
+      ),
+    );
+  }
+
+  Map<String, WidgetBuilder> _buildRoutes() {
+    return {
+      '/auth': (context) => _buildAuthScreen(context),
+      '/login': (context) => const LoginScreen(),
+      '/register': (context) => const RegisterScreen(),
+      '/dashboard': (context) => const _PlaceholderTab(title: 'Dashboard', icon: Icons.dashboard),
+      '/workouts': (context) => const _PlaceholderTab(title: 'Workouts', icon: Icons.fitness_center),
+      '/nutrition': (context) => const _PlaceholderTab(title: 'Nutrition', icon: Icons.restaurant),
+      '/social': (context) => const _PlaceholderTab(title: 'Social', icon: Icons.people),
+      '/recommendations': (context) => const _PlaceholderTab(title: 'Recommendations', icon: Icons.auto_awesome),
+      '/profile': (context) => const _PlaceholderTab(title: 'Profile', icon: Icons.person),
+      '/settings': (context) => const _PlaceholderTab(title: 'Settings', icon: Icons.settings),
+    };
+  }
+}
+
+class _MainScreenContent extends StatefulWidget {
+  @override
+  State<_MainScreenContent> createState() => _MainScreenContentState();
+}
+
+class _MainScreenContentState extends State<_MainScreenContent> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    // Initialize real-time notifications for authenticated user
+    // In a real app, you'd get the user ID from your auth service
+    const mockUserId = 'current_user_id';
+    await RealtimeNotificationManager.instance.initialize(mockUserId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: DefaultTabController(
         length: 5,
         child: Scaffold(
           appBar: AppBar(
             title: const Text('Trego'),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications),
                 onPressed: () {
-                  // Navigate to notifications
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationSettingsScreen(),
+                    ),
+                  );
                 },
               ),
               IconButton(
@@ -161,11 +217,11 @@ class TregoApp extends StatelessWidget {
           ),
           body: const TabBarView(
             children: [
-              _PlaceholderTab(title: 'Dashboard', icon: Icons.dashboard),
-              _PlaceholderTab(title: 'Workouts', icon: Icons.fitness_center),
-              _PlaceholderTab(title: 'Nutrition', icon: Icons.restaurant),
-              _PlaceholderTab(title: 'Social', icon: Icons.people),
-              _PlaceholderTab(title: 'For You', icon: Icons.auto_awesome),
+              TrackerHub(),
+              WorkoutHub(),
+              RecipeScreen(),
+              SocialHub(),
+              ForYouHub(),
             ],
           ),
           bottomNavigationBar: const TabBar(
@@ -183,19 +239,6 @@ class TregoApp extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Map<String, WidgetBuilder> _buildRoutes() {
-    return {
-      '/auth': (context) => _buildAuthScreen(context),
-      '/dashboard': (context) => const _PlaceholderTab(title: 'Dashboard', icon: Icons.dashboard),
-      '/workouts': (context) => const _PlaceholderTab(title: 'Workouts', icon: Icons.fitness_center),
-      '/nutrition': (context) => const _PlaceholderTab(title: 'Nutrition', icon: Icons.restaurant),
-      '/social': (context) => const _PlaceholderTab(title: 'Social', icon: Icons.people),
-      '/recommendations': (context) => const _PlaceholderTab(title: 'Recommendations', icon: Icons.auto_awesome),
-      '/profile': (context) => const _PlaceholderTab(title: 'Profile', icon: Icons.person),
-      '/settings': (context) => const _PlaceholderTab(title: 'Settings', icon: Icons.settings),
-    };
   }
 }
 
@@ -218,7 +261,7 @@ class _PlaceholderTab extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
-          const Text('Coming soon with backend integration!'),
+          const Text('Coming soon with real-time notifications!'),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {

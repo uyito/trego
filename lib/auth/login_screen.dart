@@ -263,13 +263,9 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       
+      // Auth state change will automatically trigger navigation via AppStateProvider
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainNavigation(),
-          ),
-        );
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {

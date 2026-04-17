@@ -301,13 +301,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         name: _emailController.text.split('@')[0], // Use email prefix as name
       );
       
+      // Auth state change will automatically trigger navigation via AppStateProvider
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MainNavigation(),
-          ),
-        );
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {

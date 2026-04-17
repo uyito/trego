@@ -9,7 +9,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final NotificationService _notificationService = NotificationService();
+  final NotificationService _notificationService = NotificationService.instance;
   
   bool _waterRemindersEnabled = true;
   bool _workoutRemindersEnabled = false;
@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     if (_workoutRemindersEnabled) {
-      await _notificationService.scheduleWorkoutReminder(
+      await _notificationService.scheduleWorkoutReminderLegacy(
         hour: _workoutReminderTime.hour,
         minute: _workoutReminderTime.minute,
       );

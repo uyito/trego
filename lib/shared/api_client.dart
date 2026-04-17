@@ -1,30 +1,13 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'enhanced_api_client.dart';
 
 class ApiClient {
   static ApiClient? _instance;
-  late Dio _dio;
-  String? _authToken;
-  
-  static const String baseUrl = kDebugMode 
-      ? 'https://d7bb9d15fc13.ngrok-free.app/api'
-      : 'https://api.trego.app';
+  late EnhancedApiClient _enhancedClient;
 
   ApiClient._() {
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
-
-    _setupInterceptors();
+    _enhancedClient = EnhancedApiClient.instance;
   }
 
   static ApiClient get instance {
@@ -32,122 +15,37 @@ class ApiClient {
     return _instance!;
   }
 
-  void _setupInterceptors() {
-    // Request interceptor - Add auth token
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        if (_authToken != null) {
-          options.headers['Authorization'] = 'Bearer $_authToken';
-        }
-        
-        if (kDebugMode) {
-          print('🚀 REQUEST: ${options.method} ${options.path}');
-          if (options.data != null) {
-            print('📤 DATA: ${options.data}');
-          }
-        }
-        
-        handler.next(options);
-      },
-      onResponse: (response, handler) {
-        if (kDebugMode) {
-          print('✅ RESPONSE: ${response.statusCode} ${response.requestOptions.path}');
-        }
-        handler.next(response);
-      },
-      onError: (error, handler) async {
-        if (kDebugMode) {
-          print('❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.path}');
-          print('ERROR DATA: ${error.response?.data}');
-        }
-
-        // Handle token expiration
-        if (error.response?.statusCode == 401) {
-          await _handleTokenExpiration();
-          
-          // Retry the request with new token if available
-          if (_authToken != null) {
-            try {
-              final retryRequest = await _dio.fetch(error.requestOptions.copyWith(
-                headers: {...error.requestOptions.headers, 'Authorization': 'Bearer $_authToken'},
-              ));
-              return handler.resolve(retryRequest);
-            } catch (retryError) {
-              handler.next(error);
-            }
-          }
-        }
-
-        // Handle rate limiting
-        if (error.response?.statusCode == 429) {
-          final retryAfter = error.response?.headers.value('retry-after');
-          if (retryAfter != null) {
-            await Future.delayed(Duration(seconds: int.parse(retryAfter)));
-            try {
-              final retryRequest = await _dio.fetch(error.requestOptions);
-              return handler.resolve(retryRequest);
-            } catch (retryError) {
-              handler.next(error);
-            }
-          }
-        }
-
-        handler.next(error);
-      },
-    ));
-  }
-
-  Future<void> _handleTokenExpiration() async {
-    try {
-      // Try to refresh Firebase token and sync with backend
-      final prefs = await SharedPreferences.getInstance();
-      final refreshToken = prefs.getString('firebase_refresh_token');
-      
-      if (refreshToken != null) {
-        // This would be handled by the auth service
-        // For now, just clear the token
-        await clearAuthToken();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error handling token expiration: $e');
-      }
-      await clearAuthToken();
-    }
-  }
-
-  // Authentication methods
+  // Authentication methods - delegate to enhanced client
   Future<void> setAuthToken(String token) async {
-    _authToken = token;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
+    await _enhancedClient.setAuthToken(token);
   }
 
   Future<void> clearAuthToken() async {
-    _authToken = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await _enhancedClient.clearAuthToken();
   }
 
   Future<void> loadAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    _authToken = prefs.getString('auth_token');
+    await _enhancedClient.loadAuthToken();
   }
 
-  // HTTP Methods
+  // HTTP Methods - convert enhanced responses to legacy Dio responses
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    try {
-      return await _dio.get<T>(
-        path,
-        queryParameters: queryParameters,
-        options: options,
+    final response = await _enhancedClient.get<T>(path, queryParameters: queryParameters);
+    if (response.isSuccess) {
+      return Response<T>(
+        data: response.data,
+        statusCode: 200,
+        requestOptions: RequestOptions(path: path),
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } else {
+      throw ApiException(
+        message: response.error ?? 'Unknown error',
+        statusCode: _getStatusCodeFromErrorType(response.errorType),
+      );
     }
   }
 
@@ -157,15 +55,18 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    try {
-      return await _dio.post<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
+    final response = await _enhancedClient.post<T>(path, data: data, queryParameters: queryParameters);
+    if (response.isSuccess) {
+      return Response<T>(
+        data: response.data,
+        statusCode: 200,
+        requestOptions: RequestOptions(path: path),
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } else {
+      throw ApiException(
+        message: response.error ?? 'Unknown error',
+        statusCode: _getStatusCodeFromErrorType(response.errorType),
+      );
     }
   }
 
@@ -175,15 +76,18 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    try {
-      return await _dio.put<T>(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
+    final response = await _enhancedClient.put<T>(path, data: data, queryParameters: queryParameters);
+    if (response.isSuccess) {
+      return Response<T>(
+        data: response.data,
+        statusCode: 200,
+        requestOptions: RequestOptions(path: path),
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } else {
+      throw ApiException(
+        message: response.error ?? 'Unknown error',
+        statusCode: _getStatusCodeFromErrorType(response.errorType),
+      );
     }
   }
 
@@ -192,14 +96,18 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    try {
-      return await _dio.delete<T>(
-        path,
-        queryParameters: queryParameters,
-        options: options,
+    final response = await _enhancedClient.delete<T>(path, queryParameters: queryParameters);
+    if (response.isSuccess) {
+      return Response<T>(
+        data: response.data,
+        statusCode: 200,
+        requestOptions: RequestOptions(path: path),
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } else {
+      throw ApiException(
+        message: response.error ?? 'Unknown error',
+        statusCode: _getStatusCodeFromErrorType(response.errorType),
+      );
     }
   }
 
@@ -210,36 +118,40 @@ class ApiClient {
     String fieldName = 'file',
     Map<String, dynamic>? additionalData,
   }) async {
-    try {
-      final formData = FormData.fromMap({
-        fieldName: await MultipartFile.fromFile(file.path),
-        if (additionalData != null) ...additionalData,
-      });
-
-      return await _dio.post<T>(
-        path,
-        data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-        ),
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
-    }
+    // For file uploads, we'll use a basic implementation
+    // This could be enhanced later with the same pattern
+    throw UnimplementedError('File upload not yet implemented in enhanced client');
   }
 
   // Check connectivity
   Future<bool> checkConnectivity() async {
-    try {
-      final response = await _dio.get('/health');
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
+    return await _enhancedClient.checkConnectivity();
+  }
+
+  // Check if online
+  bool get isOnline => _enhancedClient.isOnline;
+
+  // Helper method to convert error types to status codes
+  int? _getStatusCodeFromErrorType(ApiErrorType? errorType) {
+    switch (errorType) {
+      case ApiErrorType.client:
+        return 400;
+      case ApiErrorType.server:
+        return 500;
+      case ApiErrorType.timeout:
+        return 408;
+      case ApiErrorType.network:
+        return null;
+      case ApiErrorType.cancelled:
+        return null;
+      case ApiErrorType.unknown:
+      default:
+        return null;
     }
   }
 }
 
-// Custom API Exception class
+// Custom API Exception class - keeping for backward compatibility
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
