@@ -11,9 +11,18 @@ class AppearanceController extends ChangeNotifier {
   ThemeMode get mode => _mode;
 
   /// Load the persisted mode. Call once at app start before using [mode].
+  ///
+  /// Emits one notification on completion so that any consumer that already
+  /// subscribed (e.g., `MaterialApp.themeMode` via a `Consumer`) rebuilds
+  /// once the stored preference resolves. Without this, a returning user
+  /// with a stored `light`/`dark` preference sees the first frame render
+  /// in `system` mode.
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    _mode = _parse(prefs.getString(_prefsKey));
+    final parsed = _parse(prefs.getString(_prefsKey));
+    if (parsed == _mode) return;
+    _mode = parsed;
+    notifyListeners();
   }
 
   /// Update the mode, persist it, and notify listeners. No-op if unchanged.

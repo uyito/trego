@@ -53,7 +53,9 @@ class WorkoutHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: Space.md),
           Material(
-            color: Colors.white,
+            // Semantic: "the color that reads on top of brand". Renders white
+            // today; tracks the token if the brand gradient is ever reversed.
+            color: tokens.onBrand,
             borderRadius: BorderRadius.circular(10),
             child: InkWell(
               onTap: onStart,

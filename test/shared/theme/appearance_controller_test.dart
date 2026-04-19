@@ -58,4 +58,28 @@ void main() {
     await controller.setMode(ThemeMode.system);
     expect(notifyCount, 0);
   });
+
+  test('load() notifies listeners when stored preference differs from default', () async {
+    SharedPreferences.setMockInitialValues({'appearance.mode': 'dark'});
+    final controller = AppearanceController();
+    var notifyCount = 0;
+    controller.addListener(() => notifyCount++);
+
+    await controller.load();
+
+    expect(controller.mode, ThemeMode.dark);
+    expect(notifyCount, 1, reason: 'Consumers must be told to rebuild once the stored pref resolves');
+  });
+
+  test('load() does not notify when stored preference matches default', () async {
+    // No stored value → parses to system (the initial _mode).
+    final controller = AppearanceController();
+    var notifyCount = 0;
+    controller.addListener(() => notifyCount++);
+
+    await controller.load();
+
+    expect(controller.mode, ThemeMode.system);
+    expect(notifyCount, 0, reason: 'No change → no rebuild churn');
+  });
 }

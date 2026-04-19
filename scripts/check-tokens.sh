@@ -10,7 +10,7 @@
 
 set -eu
 
-FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens/home_screen.dart lib/shared/theme"
+FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme"
 
 # Raw hex scan — ignore the tokens file itself (where the palette is defined)
 # and any line bearing an ALLOW-HEX marker.
