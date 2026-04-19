@@ -78,11 +78,10 @@ class ActivityCard extends StatelessWidget {
                 key: const Key('activity-map-placeholder'),
                 height: 120,
                 decoration: const BoxDecoration(
-                  // ALLOW-HEX: placeholder map gradient until google_maps_flutter integration
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF1E3A2F), Color(0xFF0E2418)],
+                    colors: [Color(0xFF1E3A2F), Color(0xFF0E2418)], // ALLOW-HEX: placeholder map gradient until google_maps_flutter integration
                   ),
                 ),
                 alignment: Alignment.center,
