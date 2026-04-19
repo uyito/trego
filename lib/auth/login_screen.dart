@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:trego/auth/auth_service.dart';
 import 'package:trego/auth/register_screen.dart';
 import 'package:trego/auth/social_sign_in_buttons.dart';
-import 'package:trego/navigation/main_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -195,12 +194,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   SocialSignInButtons(
                     authService: _authService,
                     onSuccess: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MainNavigation(),
-                        ),
-                      );
+                      // AppStateProvider flips to isAuthenticated=true after
+                      // AuthService.signIn completes; TregoApp's Consumer2
+                      // then swaps in AppShell. Just pop the auth route.
+                      Navigator.pop(context);
                     },
                     isLoading: _isLoading,
                   ),
