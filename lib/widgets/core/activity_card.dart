@@ -116,7 +116,10 @@ class ActivityCard extends StatelessWidget {
                       key: const Key('activity-kudos-button'),
                       onTap: onKudos,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        // vertical: Space.sm brings the row to ~32pt; combined
+                        // with the action-bar's own Space.sm vertical padding
+                        // the total target area is 48pt (HIG minimum: 44pt).
+                        padding: const EdgeInsets.symmetric(vertical: Space.sm),
                         child: Row(children: [
                           Icon(
                             activity.userHasKudosed ? Icons.favorite : Icons.favorite_border,
@@ -136,12 +139,17 @@ class ActivityCard extends StatelessWidget {
                     ),
                     const SizedBox(width: Space.lg),
                     InkWell(
+                      key: const Key('activity-comment-button'),
                       onTap: onComment,
-                      child: Row(children: [
-                        Icon(Icons.chat_bubble_outline, size: 16, color: tokens.inkMuted),
-                        const SizedBox(width: 4),
-                        Text('${activity.commentCount}', style: typo.bodySmall.copyWith(color: tokens.inkMuted)),
-                      ]),
+                      child: Padding(
+                        // Match kudos-button tap-target; HIG minimum is 44pt.
+                        padding: const EdgeInsets.symmetric(vertical: Space.sm),
+                        child: Row(children: [
+                          Icon(Icons.chat_bubble_outline, size: 16, color: tokens.inkMuted),
+                          const SizedBox(width: 4),
+                          Text('${activity.commentCount}', style: typo.bodySmall.copyWith(color: tokens.inkMuted)),
+                        ]),
+                      ),
                     ),
                     const Spacer(),
                     Text('Share', style: typo.bodySmall.copyWith(color: tokens.inkMuted)),
