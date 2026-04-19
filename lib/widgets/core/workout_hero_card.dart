@@ -59,7 +59,7 @@ class WorkoutHeroCard extends StatelessWidget {
               onTap: onStart,
               borderRadius: BorderRadius.circular(10),
               child: SizedBox(
-                height: 40,
+                height: 44, // HIG minimum tap-target height
                 child: Center(
                   child: Text(
                     ctaLabel,
