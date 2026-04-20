@@ -4,7 +4,15 @@
 
 class ApiConfig {
   // OpenAI Configuration
-  static const String openaiApiKey = 'your-openai-api-key-here';
+  //
+  // DO NOT hardcode real API keys here. Supply via build-time define:
+  //   flutter run --dart-define=OPENAI_API_KEY=sk-...
+  // Or better: proxy OpenAI calls through the backend so the key never
+  // ships in the client bundle.
+  static const String openaiApiKey = String.fromEnvironment(
+    'OPENAI_API_KEY',
+    defaultValue: 'your-openai-api-key-here',
+  );
   static const String openaiUrl = 'https://api.openai.com/v1/chat/completions';
   static const String openaiModel = 'gpt-3.5-turbo';
   
