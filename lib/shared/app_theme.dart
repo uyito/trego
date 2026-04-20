@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 
+// TODO(trego-theme-cleanup): legacy Nike theme. New code must use
+// context.tokens from lib/shared/theme/. This file is kept only until
+// the following screens migrate:
+//   - lib/workouts/*
+//   - lib/recipes/*
+//   - lib/tracker/*
+//   - lib/achievements/*
+//   - lib/profile/*
+//   - lib/widgets/nike_*.dart
+// When the last caller is gone, delete this file.
+@Deprecated('Use context.tokens from lib/shared/theme/context_tokens.dart')
 class AppTheme {
   // Nike-inspired Primary Colors
-  static const Color primaryRed = Color(0xFFE31E24);
+  static const Color primaryRed = Color(0xFFC5181E);
   static const Color primaryRedDark = Color(0xFFC62828);
   static const Color nikeOrange = Color(0xFFFF6900);
   static const Color primaryOrange = Color(0xFFFF6900);
