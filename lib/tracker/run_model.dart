@@ -12,6 +12,8 @@ class Run {
   final String? notes;
   final bool isSyncedFromWatch;
   final Map<String, dynamic>? additionalData;
+  final List<PausedInterval> pausedIntervals;
+  final bool endedByPermissionRevoke;
 
   Run({
     this.id,
@@ -25,6 +27,8 @@ class Run {
     this.notes,
     this.isSyncedFromWatch = false,
     this.additionalData,
+    this.pausedIntervals = const [],
+    this.endedByPermissionRevoke = false,
   });
 
   factory Run.fromMap(Map<String, dynamic> map, String documentId) {
@@ -40,6 +44,11 @@ class Run {
       notes: map['notes'],
       isSyncedFromWatch: map['isSyncedFromWatch'] ?? false,
       additionalData: map['additionalData'],
+      pausedIntervals: ((map['pausedIntervals'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(PausedInterval.fromMap)
+          .toList(),
+      endedByPermissionRevoke: (map['endedByPermissionRevoke'] as bool?) ?? false,
     );
   }
 
@@ -55,6 +64,8 @@ class Run {
       'notes': notes,
       'isSyncedFromWatch': isSyncedFromWatch,
       'additionalData': additionalData,
+      'pausedIntervals': pausedIntervals.map((i) => i.toMap()).toList(),
+      'endedByPermissionRevoke': endedByPermissionRevoke,
       'timestamp': FieldValue.serverTimestamp(),
     };
   }
@@ -130,6 +141,23 @@ class Run {
     if (averagePace < 7.5) return 0xFF00C851; // Green - Medium
     return 0xFF2196F3; // Blue - Low intensity
   }
+}
+
+class PausedInterval {
+  final DateTime start;
+  final DateTime end;
+
+  const PausedInterval({required this.start, required this.end});
+
+  Map<String, dynamic> toMap() => {
+        'start': Timestamp.fromDate(start),
+        'end': Timestamp.fromDate(end),
+      };
+
+  factory PausedInterval.fromMap(Map<String, dynamic> map) => PausedInterval(
+        start: (map['start'] as Timestamp).toDate(),
+        end: (map['end'] as Timestamp).toDate(),
+      );
 }
 
 class LatLng {
