@@ -12,6 +12,8 @@ import 'shared/connectivity_status_widget.dart';
 import 'shared/realtime_notification_manager.dart';
 import 'shared/theme/appearance_controller.dart';
 import 'shared/theme/trego_theme.dart';
+import 'tracker/pending_saves_flusher.dart';
+import 'tracker/record_preferences.dart';
 import 'widgets/error_handler_widget.dart';
 
 class TregoApp extends StatefulWidget {
@@ -39,6 +41,12 @@ class _TregoAppState extends State<TregoApp> {
         ChangeNotifierProvider(create: (_) => PlanProvider()),
         ChangeNotifierProvider(create: (_) => FeedProvider()),
         ChangeNotifierProvider<AppearanceController>.value(value: _appearance),
+        // Record flow providers
+        ChangeNotifierProvider(create: (_) => RecordPreferences()..load()),
+        Provider<PendingSavesFlusher>(
+          create: (_) => PendingSavesFlusher(saver: FirestoreRunSaver())..start(),
+          dispose: (_, __) {},
+        ),
       ],
       child: Consumer2<AppStateProvider, AppearanceController>(
         builder: (context, appState, appearance, _) {
