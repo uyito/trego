@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:geolocator/geolocator.dart';
 import 'package:health/health.dart';
 import 'package:trego/tracker/run_model.dart';
@@ -9,16 +10,50 @@ import 'package:trego/auth/auth_service.dart';
 class RunService {
   static final RunService _instance = RunService._internal();
   factory RunService() => _instance;
-  RunService._internal() {
+  RunService._internal()
+      : _positionStreamFactory = _defaultPositionStreamFactory,
+        _skipPermissionChecks = false {
     // Initialize health data asynchronously to not block app startup
     Future.delayed(const Duration(milliseconds: 500), () {
       _initializeHealth();
     });
   }
+
+  /// Test-only. Inject a position-stream factory that returns a fresh stream
+  /// each call so we can simulate pause/resume without a real device.
+  /// Skips Geolocator permission / service-enabled checks, which fail in
+  /// the flutter_test harness.
+  @visibleForTesting
+  RunService.testable({
+    required Stream<Position> Function() positionStreamFactory,
+  })  : _positionStreamFactory = positionStreamFactory,
+        _skipPermissionChecks = true;
+
   static RunService get instance => _instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final AuthService _authService = AuthService();
-  
+
+  /// Injectable for tests. Defaults to Geolocator.getPositionStream.
+  final Stream<Position> Function() _positionStreamFactory;
+
+  /// When true, startRun skips the Geolocator permission / service-enabled
+  /// preflight. Only set by [RunService.testable].
+  final bool _skipPermissionChecks;
+
+  static Stream<Position> _defaultPositionStreamFactory() =>
+      Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10, // Update every 10 meters
+        ),
+      );
+
+  // Lazy so the `testable` constructor doesn't touch Firebase at construction
+  // time (Firebase.initializeApp is not called in unit tests).
+  FirebaseFirestore? _firestoreInstance;
+  FirebaseFirestore get _firestore =>
+      _firestoreInstance ??= FirebaseFirestore.instance;
+  AuthService? _authServiceInstance;
+  AuthService get _authService => _authServiceInstance ??= AuthService();
+
   // GPS tracking
   StreamSubscription<Position>? _positionStream;
   List<LatLng> _currentRoute = [];
@@ -27,7 +62,8 @@ class RunService {
   Duration _currentDuration = Duration.zero;
   double _currentDistance = 0.0;
   LatLng? _lastPosition;
-  
+  double? _lastAccuracy;
+
   // Health data
   final HealthFactory _health = HealthFactory();
   bool _isHealthAvailable = false;
@@ -43,6 +79,7 @@ class RunService {
   final StreamController<List<LatLng>> _routeController = StreamController<List<LatLng>>.broadcast();
   final StreamController<bool> _isRunningController = StreamController<bool>.broadcast();
   final StreamController<bool> _isPausedController = StreamController<bool>.broadcast();
+  final StreamController<Object> _errorController = StreamController<Object>.broadcast();
 
   // Getters
   Stream<Duration> get durationStream => _durationController.stream;
@@ -50,11 +87,31 @@ class RunService {
   Stream<List<LatLng>> get routeStream => _routeController.stream;
   Stream<bool> get isRunningStream => _isRunningController.stream;
   Stream<bool> get isPausedStream => _isPausedController.stream;
+  /// Surfaces stream / IO errors so the Record flow can react.
+  Stream<Object> get errorStream => _errorController.stream;
   bool get isRunning => _runStartTime != null;
   bool get isPaused => _isPaused;
   Duration get currentDuration => _currentDuration;
   double get currentDistance => _currentDistance;
+  /// Alias for [currentDistance] in kilometers. Used by tests that want an
+  /// unambiguous unit-suffixed name.
+  double get currentDistanceKm => _currentDistance;
   List<LatLng> get currentRoute => List.unmodifiable(_currentRoute);
+
+  /// Current pace in MM:SS per kilometer, or null if no meaningful pace yet
+  /// (zero distance or zero duration). Computed from current duration and
+  /// distance — does NOT require a finished run.
+  Duration? get currentPacePerKm {
+    if (_currentDistance <= 0 || _currentDuration == Duration.zero) return null;
+    final secondsPerKm =
+        _currentDuration.inMilliseconds / 1000.0 / _currentDistance;
+    if (!secondsPerKm.isFinite || secondsPerKm <= 0) return null;
+    return Duration(milliseconds: (secondsPerKm * 1000).round());
+  }
+
+  /// Most recent GPS accuracy in meters, or null if none reported yet.
+  /// Updated from each [Position.accuracy] on the position stream.
+  double? get currentAccuracyMeters => _lastAccuracy;
 
   // Initialize health data access
   Future<void> _initializeHealth() async {
@@ -80,26 +137,29 @@ class RunService {
         return false;
       }
 
-      // Check location permissions
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        final requested = await Geolocator.requestPermission();
-        if (requested == LocationPermission.denied) {
-          print('Location permission denied');
+      // Check location permissions (skipped for unit tests that inject a
+      // position-stream factory via [RunService.testable]).
+      if (!_skipPermissionChecks) {
+        final permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          final requested = await Geolocator.requestPermission();
+          if (requested == LocationPermission.denied) {
+            print('Location permission denied');
+            return false;
+          }
+        }
+
+        if (permission == LocationPermission.deniedForever) {
+          print('Location permission denied forever');
           return false;
         }
-      }
 
-      if (permission == LocationPermission.deniedForever) {
-        print('Location permission denied forever');
-        return false;
-      }
-
-      // Check if location services are enabled
-      final isEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!isEnabled) {
-        print('Location services are disabled');
-        return false;
+        // Check if location services are enabled
+        final isEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!isEnabled) {
+          print('Location services are disabled');
+          return false;
+        }
       }
 
       // Reset run data
@@ -107,6 +167,7 @@ class RunService {
       _currentDistance = 0.0;
       _currentDuration = Duration.zero;
       _lastPosition = null;
+      _lastAccuracy = null;
       _runStartTime = DateTime.now();
       _pausedDuration = Duration.zero;
       _isPaused = false;
@@ -114,12 +175,7 @@ class RunService {
 
       // Start location tracking with error handling
       try {
-        _positionStream = Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 10, // Update every 10 meters
-          ),
-        ).listen(
+        _positionStream = _positionStreamFactory().listen(
           _onPositionUpdate,
           onError: (error) {
             print('Position stream error: $error');
@@ -155,8 +211,14 @@ class RunService {
     }
   }
 
-  // Stop the current run
-  Future<Run?> stopRun({String? notes}) async {
+  // Stop the current run.
+  //
+  // [saveOnStop] controls whether the finished run is written to Firestore
+  // by this service. Defaults to true to preserve the legacy
+  // tracker_dashboard_screen.dart code path. The new Record flow passes
+  // false because [PendingSavesFlusher] is the sole save path there
+  // (the flow enqueues the run and the flusher writes it).
+  Future<Run?> stopRun({String? notes, bool saveOnStop = true}) async {
     try {
       if (!isRunning) return null;
 
@@ -170,9 +232,13 @@ class RunService {
       final duration = endTime.difference(_runStartTime!);
       final pace = Run.calculatePace(duration, _currentDistance);
 
-      // Create run object
+      // Create run object. In test mode we skip AuthService entirely — it
+      // touches FirebaseAuth.instance at field-init time which blows up in
+      // the test harness.
       final run = Run(
-        userId: _authService.currentUser?.uid ?? '',
+        userId: _skipPermissionChecks
+            ? ''
+            : (_authService.currentUser?.uid ?? ''),
         startTime: _runStartTime!,
         endTime: endTime,
         duration: duration,
@@ -182,8 +248,13 @@ class RunService {
         notes: notes,
       );
 
-      // Save to Firestore
-      await _saveRun(run);
+      // Save to Firestore (skipped in test mode — Firestore is not
+      // initialized in unit tests). Also skipped when [saveOnStop] is
+      // false; in that case the caller (e.g., the Record flow) is
+      // responsible for persistence via PendingSavesFlusher.
+      if (!_skipPermissionChecks && saveOnStop) {
+        await _saveRun(run);
+      }
 
       // Reset state
       _runStartTime = null;
@@ -191,6 +262,7 @@ class RunService {
       _currentDistance = 0.0;
       _currentDuration = Duration.zero;
       _lastPosition = null;
+      _lastAccuracy = null;
       _pausedDuration = Duration.zero;
       _isPaused = false;
       _pauseTime = null;
@@ -215,6 +287,7 @@ class RunService {
 
       final newPosition = LatLng(position.latitude, position.longitude);
       _currentRoute.add(newPosition);
+      _lastAccuracy = position.accuracy;
 
       // Calculate distance
       if (_lastPosition != null) {
@@ -485,26 +558,45 @@ class RunService {
     }
   }
 
-  // Add pauseRun and resumeRun methods
-  void pauseRun() {
+  // Pause/resume.
+  //
+  // NOTE: StreamSubscription.pause() only BUFFERS events from the underlying
+  // stream — the Geolocator keeps producing points during a "pause," so
+  // distance accumulated anyway when the subscription was resumed. We now
+  // cancel the subscription on pause and create a fresh one on resume via
+  // the injected factory. Test coverage:
+  // test/tracker/run_service_pause_test.dart.
+  Future<void> pauseRun() async {
     if (!isRunning || _isPaused) return;
     _isPaused = true;
     _pauseTime = DateTime.now();
     _runTimer?.cancel();
-    _positionStream?.pause();
+    _runTimer = null;
+    await _positionStream?.cancel(); // CANCEL — not .pause()
+    _positionStream = null;
     _isPausedController.add(true); // Notify UI that run is paused
   }
 
-  void resumeRun() {
+  Future<void> resumeRun() async {
     if (!isRunning || !_isPaused) return;
     _isPaused = false;
     if (_pauseTime != null) {
       _pausedDuration += DateTime.now().difference(_pauseTime!);
     }
     _pauseTime = null;
-    // Resume timer
+    // Fresh subscription via the injected factory.
+    try {
+      _positionStream = _positionStreamFactory().listen(
+        _onPositionUpdate,
+        onError: (error) {
+          print('Position stream error: $error');
+        },
+      );
+    } catch (e) {
+      print('Error re-subscribing to position stream on resume: $e');
+    }
+    // Restart timer
     _runTimer = Timer.periodic(const Duration(seconds: 1), _onTimerTick);
-    _positionStream?.resume();
     _isPausedController.add(false); // Notify UI that run is resumed
   }
 
@@ -517,5 +609,6 @@ class RunService {
     _routeController.close();
     _isRunningController.close();
     _isPausedController.close();
+    _errorController.close();
   }
-} 
+}

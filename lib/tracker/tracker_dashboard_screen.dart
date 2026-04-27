@@ -5,7 +5,6 @@ import 'package:trego/tracker/tracker_service.dart';
 import 'package:trego/tracker/weekly_summary_screen.dart';
 import 'package:trego/achievements/achievement_service.dart';
 import 'package:trego/tracker/weekly_recap_widget.dart';
-import 'package:trego/tracker/live_run_tracker_screen.dart';
 import 'package:trego/tracker/run_service.dart';
 import 'dart:async';
 
@@ -439,12 +438,13 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                   children: [
                                     Expanded(
                                       child: ElevatedButton.icon(
-                                        onPressed: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const LiveRunTrackerScreen(),
-                                          ),
-                                        ),
+                                        onPressed: () {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Start a run from the Record button in the bottom bar.'),
+                                            ),
+                                          );
+                                        },
                                         icon: const Icon(Icons.play_arrow_rounded),
                                         label: const Text('Live Run'),
                                         style: ElevatedButton.styleFrom(
@@ -1054,10 +1054,9 @@ class _ActiveRunBannerState extends State<_ActiveRunBanner> {
       elevation: 4,
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const LiveRunTrackerScreen(),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Start a run from the Record button in the bottom bar.'),
             ),
           );
         },

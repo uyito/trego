@@ -81,6 +81,9 @@ dependencies:
   # Network connectivity monitoring
   connectivity_plus: ^6.0.5
 
+  # Keep the screen awake during recording
+  wakelock_plus: ^1.2.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -121,6 +124,9 @@ flutter:
           weight: 800
         - asset: assets/fonts/Inter-Black.ttf
           weight: 900
+
+  assets:
+    - assets/map_styles/dark.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

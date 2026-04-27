@@ -13,7 +13,6 @@ import '../widgets/core/trego_app_bar.dart';
 import '../widgets/core/trego_button.dart';
 import '../widgets/core/trego_scaffold.dart';
 import '../widgets/core/workout_hero_card.dart';
-import 'record_placeholder_screen.dart';
 
 /// Home tab. Reference application of the design system.
 /// Layout (top → bottom):
@@ -62,8 +61,10 @@ class HomeScreen extends StatelessWidget {
                 if (today == null) {
                   onSwitchTab?.call(TregoTab.plan);
                 } else {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RecordPlaceholderScreen(), fullscreenDialog: true),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Start a run from the Record button in the bottom bar.'),
+                    ),
                   );
                 }
               },

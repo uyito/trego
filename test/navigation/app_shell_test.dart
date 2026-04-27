@@ -1,40 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trego/navigation/app_shell.dart';
 import 'package:trego/providers/app_state_provider.dart';
 import 'package:trego/providers/feed_provider.dart';
 import 'package:trego/providers/plan_provider.dart';
-import 'package:trego/shared/theme/trego_theme.dart';
+import 'package:trego/tracker/pending_saves_flusher.dart';
+import 'package:trego/tracker/record_preferences.dart';
+import 'package:trego/tracker/run_model.dart';
 
-/// Minimal fake that satisfies the [AppStateProvider] interface without
-/// touching Firebase. [YouScreen] only reads `.user` for the display name.
-class _FakeAppStateProvider extends ChangeNotifier implements AppStateProvider {
-  @override
-  Map<String, dynamic>? get user => null;
+import '../helpers/test_app.dart';
 
+class _NoOpRunSaver implements RunSaver {
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<void> save(Run run) async {}
 }
 
-Widget _wrap(Widget child) => MultiProvider(
-  providers: [
-    ChangeNotifierProvider(create: (_) => PlanProvider()),
-    ChangeNotifierProvider(create: (_) => FeedProvider()),
-    ChangeNotifierProvider<AppStateProvider>(create: (_) => _FakeAppStateProvider()),
-  ],
-  child: MaterialApp(
-    theme: TregoTheme.light(),
-    darkTheme: TregoTheme.dark(),
-    themeMode: ThemeMode.dark,
-    home: child,
-  ),
-);
+Widget _wrap(Widget child) => ChangeNotifierProvider<AppStateProvider>.value(
+      value: FakeAppStateProvider(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => PlanProvider()),
+          ChangeNotifierProvider(create: (_) => FeedProvider()),
+          ChangeNotifierProvider(create: (_) => RecordPreferences()),
+          Provider<PendingSavesFlusher>(
+            create: (_) => PendingSavesFlusher(saver: _NoOpRunSaver()),
+          ),
+        ],
+        child: testApp(child),
+      ),
+    );
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-  GoogleFonts.config.allowRuntimeFetching = false;
+  initTestEnv();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
   testWidgets('shell starts on Home tab', (tester) async {
     await tester.pumpWidget(_wrap(const AppShell()));
@@ -59,6 +62,6 @@ void main() {
     await tester.pumpWidget(_wrap(const AppShell()));
     await tester.tap(find.byKey(const Key('shell-record-button')));
     await tester.pumpAndSettle();
-    expect(find.text('Record flow coming soon'), findsOneWidget);
+    expect(find.text('Ready'), findsOneWidget);
   });
 }
