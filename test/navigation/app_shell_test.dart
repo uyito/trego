@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trego/navigation/app_shell.dart';
 import 'package:trego/providers/app_state_provider.dart';
 import 'package:trego/providers/feed_provider.dart';
 import 'package:trego/providers/plan_provider.dart';
+import 'package:trego/tracker/pending_saves_flusher.dart';
+import 'package:trego/tracker/record_preferences.dart';
+import 'package:trego/tracker/run_model.dart';
 
 import '../helpers/test_app.dart';
+
+class _NoOpRunSaver implements RunSaver {
+  @override
+  Future<void> save(Run run) async {}
+}
 
 Widget _wrap(Widget child) => ChangeNotifierProvider<AppStateProvider>.value(
       value: FakeAppStateProvider(),
@@ -14,6 +23,10 @@ Widget _wrap(Widget child) => ChangeNotifierProvider<AppStateProvider>.value(
         providers: [
           ChangeNotifierProvider(create: (_) => PlanProvider()),
           ChangeNotifierProvider(create: (_) => FeedProvider()),
+          ChangeNotifierProvider(create: (_) => RecordPreferences()),
+          Provider<PendingSavesFlusher>(
+            create: (_) => PendingSavesFlusher(saver: _NoOpRunSaver()),
+          ),
         ],
         child: testApp(child),
       ),
@@ -21,6 +34,10 @@ Widget _wrap(Widget child) => ChangeNotifierProvider<AppStateProvider>.value(
 
 void main() {
   initTestEnv();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
   testWidgets('shell starts on Home tab', (tester) async {
     await tester.pumpWidget(_wrap(const AppShell()));
@@ -45,6 +62,6 @@ void main() {
     await tester.pumpWidget(_wrap(const AppShell()));
     await tester.tap(find.byKey(const Key('shell-record-button')));
     await tester.pumpAndSettle();
-    expect(find.text('Record flow coming soon'), findsOneWidget);
+    expect(find.text('Ready'), findsOneWidget);
   });
 }

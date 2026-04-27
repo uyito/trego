@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/feed_placeholder_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/plan_placeholder_screen.dart';
-import '../screens/record_placeholder_screen.dart';
+import '../screens/record/record_flow.dart';
 import '../screens/you_screen.dart';
 import '../shared/theme/context_tokens.dart';
 import 'tab_config.dart';
@@ -23,7 +23,7 @@ class _AppShellState extends State<AppShell> {
     Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const RecordPlaceholderScreen(),
+        builder: (_) => const RecordFlow(),
       ),
     );
   }
