@@ -10,7 +10,13 @@
 
 set -eu
 
-FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme"
+FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
+  lib/tracker/session_controller.dart \
+  lib/tracker/auto_pause_detector.dart \
+  lib/tracker/record_preferences.dart \
+  lib/tracker/pending_saves_flusher.dart \
+  lib/tracker/record_errors.dart \
+  lib/tracker/record_state.dart"
 
 # Raw hex scan — ignore the tokens file itself (where the palette is defined)
 # and any line bearing an ALLOW-HEX marker.
