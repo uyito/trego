@@ -78,6 +78,7 @@ class RunService {
   final StreamController<List<LatLng>> _routeController = StreamController<List<LatLng>>.broadcast();
   final StreamController<bool> _isRunningController = StreamController<bool>.broadcast();
   final StreamController<bool> _isPausedController = StreamController<bool>.broadcast();
+  final StreamController<Object> _errorController = StreamController<Object>.broadcast();
 
   // Getters
   Stream<Duration> get durationStream => _durationController.stream;
@@ -85,6 +86,8 @@ class RunService {
   Stream<List<LatLng>> get routeStream => _routeController.stream;
   Stream<bool> get isRunningStream => _isRunningController.stream;
   Stream<bool> get isPausedStream => _isPausedController.stream;
+  /// Surfaces stream / IO errors so the Record flow can react.
+  Stream<Object> get errorStream => _errorController.stream;
   bool get isRunning => _runStartTime != null;
   bool get isPaused => _isPaused;
   Duration get currentDuration => _currentDuration;
@@ -93,6 +96,21 @@ class RunService {
   /// unambiguous unit-suffixed name.
   double get currentDistanceKm => _currentDistance;
   List<LatLng> get currentRoute => List.unmodifiable(_currentRoute);
+
+  /// Current pace in MM:SS per kilometer, or null if no meaningful pace yet
+  /// (zero distance or zero duration). Computed from current duration and
+  /// distance — does NOT require a finished run.
+  Duration? get currentPacePerKm {
+    if (_currentDistance <= 0 || _currentDuration == Duration.zero) return null;
+    final secondsPerKm =
+        _currentDuration.inMilliseconds / 1000.0 / _currentDistance;
+    if (!secondsPerKm.isFinite || secondsPerKm <= 0) return null;
+    return Duration(milliseconds: (secondsPerKm * 1000).round());
+  }
+
+  /// Most recent GPS accuracy in meters, or null if none reported yet.
+  /// We don't track accuracy on the position stream today, so this is null.
+  double? get currentAccuracyMeters => null;
 
   // Initialize health data access
   Future<void> _initializeHealth() async {
@@ -579,5 +597,6 @@ class RunService {
     _routeController.close();
     _isRunningController.close();
     _isPausedController.close();
+    _errorController.close();
   }
-} 
+}
