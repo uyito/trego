@@ -9,10 +9,12 @@ import '../shared/theme/context_tokens.dart';
 import '../shared/theme/trego_tokens.dart';
 import '../social/social_hub.dart';
 import '../tdee/tdee_screen.dart';
+import '../tracker/tracker_dashboard_screen.dart';
 import '../widgets/core/trego_app_bar.dart';
 import '../widgets/core/trego_avatar.dart';
 import '../widgets/core/trego_scaffold.dart';
 import 'appearance_settings_screen.dart';
+import 'recording_settings_screen.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -33,12 +35,14 @@ class YouScreen extends StatelessWidget {
           _Row(icon: Icons.restaurant_menu, title: 'Recipes', onTap: () => _push(context, const RecipeScreen())),
           _Row(icon: Icons.calculate_outlined, title: 'TDEE Calculator', onTap: () => _push(context, const TdeeScreen())),
           _Row(icon: Icons.auto_awesome, title: 'For You', onTap: () => _push(context, const ForYouHub())),
+          _Row(icon: Icons.timeline, title: 'Run History', onTap: () => _push(context, const TrackerDashboardScreen())),
           const _SectionLabel(label: 'Activity'),
           _Row(icon: Icons.emoji_events_outlined, title: 'Achievements', onTap: () => _push(context, const AchievementsScreen())),
           _Row(icon: Icons.people_outline, title: 'Social (legacy)', onTap: () => _push(context, const SocialHub())),
           const _SectionLabel(label: 'Settings'),
           _Row(icon: Icons.notifications_none, title: 'Notifications', onTap: () => _push(context, const NotificationSettingsScreen())),
           _Row(icon: Icons.palette_outlined, title: 'Appearance', onTap: () => _push(context, const AppearanceSettingsScreen())),
+          _Row(icon: Icons.directions_run, title: 'Recording', onTap: () => _push(context, const RecordingSettingsScreen())),
           const SizedBox(height: Space.xl),
           _Row(icon: Icons.logout, title: 'Sign out', destructive: true, onTap: () => auth.signOut()),
           const SizedBox(height: Space.xxl),
