@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../shared/theme/context_tokens.dart';
 import '../../shared/theme/trego_tokens.dart';
+import '../../tracker/run_model.dart';
 import '../../tracker/session_controller.dart';
 
 class StopConfirmScreen extends StatelessWidget {
@@ -38,12 +39,14 @@ class StopConfirmScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _Mini(value: _fmtDuration(c.elapsed), label: 'Time'),
+                    _Mini(
+                        value: Run.formatDuration(c.elapsed),
+                        label: 'Time'),
                     _Mini(value: c.distanceKm.toStringAsFixed(2), label: 'km'),
                     _Mini(
                       value: c.currentPacePerKm == null
                           ? '—'
-                          : _fmtDuration(c.currentPacePerKm!),
+                          : Run.formatDuration(c.currentPacePerKm!),
                       label: '/km',
                     ),
                   ],
@@ -105,11 +108,6 @@ class StopConfirmScreen extends StatelessWidget {
     if (confirmed == true) c.discard();
   }
 
-  static String _fmtDuration(Duration d) {
-    final mm = d.inMinutes;
-    final ss = d.inSeconds % 60;
-    return '${mm.toString()}:${ss.toString().padLeft(2, '0')}';
-  }
 }
 
 class _Mini extends StatelessWidget {

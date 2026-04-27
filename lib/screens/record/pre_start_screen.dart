@@ -8,14 +8,11 @@ import '../../widgets/core/trego_app_bar.dart';
 import '../../widgets/core/trego_scaffold.dart';
 
 class PreStartScreen extends StatelessWidget {
-  /// Current GPS accuracy in meters; null = acquiring.
-  final double? gpsAccuracyMeters;
+  const PreStartScreen({super.key});
 
-  const PreStartScreen({super.key, required this.gpsAccuracyMeters});
-
-  GpsStatus get _status {
-    if (gpsAccuracyMeters == null) return GpsStatus.acquiring;
-    if (gpsAccuracyMeters! > 30) return GpsStatus.weak;
+  static GpsStatus _statusFor(double? accuracyMeters) {
+    if (accuracyMeters == null) return GpsStatus.acquiring;
+    if (accuracyMeters > 30) return GpsStatus.weak;
     return GpsStatus.ready;
   }
 
@@ -23,7 +20,9 @@ class PreStartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<SessionController>();
     final tokens = context.tokens;
-    final canStart = _status != GpsStatus.acquiring;
+    final accuracyMeters = controller.currentAccuracyMeters;
+    final status = _statusFor(accuracyMeters);
+    final canStart = status != GpsStatus.acquiring;
 
     return TregoScaffold(
       appBar: TregoAppBar(
@@ -68,8 +67,8 @@ class PreStartScreen extends StatelessWidget {
               ),
               child: Row(children: [
                 GpsStatusIndicator(
-                  status: _status,
-                  accuracyMeters: gpsAccuracyMeters,
+                  status: status,
+                  accuracyMeters: accuracyMeters,
                 ),
               ]),
             ),

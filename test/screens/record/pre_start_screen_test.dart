@@ -34,10 +34,10 @@ void main() {
   initTestEnv();
 
   testWidgets('shows GPS acquiring state with disabled Start', (tester) async {
-    final c = FakeSessionController();
+    final c = FakeSessionController()..currentAccuracyMeters = null;
     await tester.pumpWidget(ChangeNotifierProvider<SessionController>.value(
       value: c,
-      child: testApp(const PreStartScreen(gpsAccuracyMeters: null)),
+      child: testApp(const PreStartScreen()),
     ));
     expect(find.text('Acquiring GPS…'), findsOneWidget);
     expect(find.text('START RUN'), findsOneWidget);
@@ -49,10 +49,10 @@ void main() {
   });
 
   testWidgets('shows GPS ready and Start invokes startCountdown', (tester) async {
-    final c = FakeSessionController();
+    final c = FakeSessionController()..currentAccuracyMeters = 4;
     await tester.pumpWidget(ChangeNotifierProvider<SessionController>.value(
       value: c,
-      child: testApp(const PreStartScreen(gpsAccuracyMeters: 4)),
+      child: testApp(const PreStartScreen()),
     ));
     expect(find.textContaining('GPS — ±4 m'), findsOneWidget);
 

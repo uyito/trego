@@ -104,7 +104,7 @@ class _RecordFlowState extends State<RecordFlow> {
       child: Navigator(
         key: _navKey,
         onGenerateRoute: (_) => MaterialPageRoute(
-          builder: (_) => const PreStartScreen(gpsAccuracyMeters: null),
+          builder: (_) => const PreStartScreen(),
         ),
       ),
     );
@@ -135,7 +135,10 @@ class _RunServiceAdapter implements SessionRunService {
 
   @override
   Future<Run> stopRun() async {
-    final run = await _inner.stopRun();
+    // saveOnStop: false — the Record flow's PendingSavesFlusher is the
+    // sole writer for finished runs; the legacy internal save would
+    // produce a duplicate Firestore document.
+    final run = await _inner.stopRun(saveOnStop: false);
     if (run != null) return run;
     // Defensive fallback: stopRun() returns null only if no run was active,
     // which shouldn't happen on the SessionController code path.

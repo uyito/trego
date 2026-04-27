@@ -67,7 +67,9 @@ class LiveRecordScreen extends StatelessWidget {
               child: Column(children: [
                 Expanded(
                   child: Row(children: [
-                    _StatCard(value: _fmtDuration(c.elapsed), label: 'Time'),
+                    _StatCard(
+                        value: run_model.Run.formatDuration(c.elapsed),
+                        label: 'Time'),
                     const SizedBox(width: Space.sm),
                     _StatCard(value: c.distanceKm.toStringAsFixed(2), label: 'km'),
                   ]),
@@ -78,7 +80,7 @@ class LiveRecordScreen extends StatelessWidget {
                     _StatCard(
                       value: c.currentPacePerKm == null
                           ? '—'
-                          : _fmtDuration(c.currentPacePerKm!),
+                          : run_model.Run.formatDuration(c.currentPacePerKm!),
                       label: '/km pace',
                     ),
                     const SizedBox(width: Space.sm),
@@ -121,12 +123,6 @@ class LiveRecordScreen extends StatelessWidget {
     if (m == null) return GpsStatus.acquiring;
     if (m > 30) return GpsStatus.weak;
     return GpsStatus.ready;
-  }
-
-  static String _fmtDuration(Duration d) {
-    final mm = d.inMinutes;
-    final ss = d.inSeconds % 60;
-    return '${mm.toString()}:${ss.toString().padLeft(2, '0')}';
   }
 
   // Rough kcal estimate: 1 kcal per kg per km, default 70 kg.

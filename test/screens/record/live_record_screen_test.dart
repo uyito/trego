@@ -43,7 +43,7 @@ void main() {
     ));
     expect(find.text('14:32'), findsOneWidget);
     expect(find.text('2.40'), findsOneWidget);
-    expect(find.text('6:03'), findsOneWidget);
+    expect(find.text('06:03'), findsOneWidget);
     expect(find.textContaining('PAUSE'), findsOneWidget);
   });
 

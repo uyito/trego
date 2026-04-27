@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'run_model.dart';
 
@@ -32,6 +34,9 @@ class PendingSavesFlusher {
 
   int _lastPendingCount = 0;
   int get pendingCount => _lastPendingCount;
+
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  bool _wasOffline = false;
 
   Future<void> enqueue(Run run) async {
     final prefs = await SharedPreferences.getInstance();
@@ -68,9 +73,29 @@ class PendingSavesFlusher {
 
   /// Start listening for connectivity changes and attempt one immediate flush.
   /// Wire in lib/app.dart at startup.
+  ///
+  /// connectivity_plus 6.x emits `Stream<List<ConnectivityResult>>`. We
+  /// flush whenever connectivity transitions from "fully offline" (every
+  /// entry is [ConnectivityResult.none]) to any connected state.
   Future<void> start() async {
     await flush();
-    // Connectivity listener is added in the lib/app.dart wiring task (Task 21).
+    _connectivitySub ??=
+        Connectivity().onConnectivityChanged.listen((results) {
+      final isConnected =
+          results.any((r) => r != ConnectivityResult.none);
+      if (isConnected && _wasOffline) {
+        // ignore: unawaited_futures
+        flush();
+      }
+      _wasOffline = !isConnected;
+    });
+  }
+
+  /// Cancel the connectivity subscription. Optional — most apps keep the
+  /// flusher alive for the lifetime of the process.
+  Future<void> dispose() async {
+    await _connectivitySub?.cancel();
+    _connectivitySub = null;
   }
 
   Map<String, dynamic> _toJson(Run run) {

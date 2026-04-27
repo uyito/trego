@@ -62,7 +62,8 @@ class RunService {
   Duration _currentDuration = Duration.zero;
   double _currentDistance = 0.0;
   LatLng? _lastPosition;
-  
+  double? _lastAccuracy;
+
   // Health data
   final HealthFactory _health = HealthFactory();
   bool _isHealthAvailable = false;
@@ -109,8 +110,8 @@ class RunService {
   }
 
   /// Most recent GPS accuracy in meters, or null if none reported yet.
-  /// We don't track accuracy on the position stream today, so this is null.
-  double? get currentAccuracyMeters => null;
+  /// Updated from each [Position.accuracy] on the position stream.
+  double? get currentAccuracyMeters => _lastAccuracy;
 
   // Initialize health data access
   Future<void> _initializeHealth() async {
@@ -166,6 +167,7 @@ class RunService {
       _currentDistance = 0.0;
       _currentDuration = Duration.zero;
       _lastPosition = null;
+      _lastAccuracy = null;
       _runStartTime = DateTime.now();
       _pausedDuration = Duration.zero;
       _isPaused = false;
@@ -209,8 +211,14 @@ class RunService {
     }
   }
 
-  // Stop the current run
-  Future<Run?> stopRun({String? notes}) async {
+  // Stop the current run.
+  //
+  // [saveOnStop] controls whether the finished run is written to Firestore
+  // by this service. Defaults to true to preserve the legacy
+  // tracker_dashboard_screen.dart code path. The new Record flow passes
+  // false because [PendingSavesFlusher] is the sole save path there
+  // (the flow enqueues the run and the flusher writes it).
+  Future<Run?> stopRun({String? notes, bool saveOnStop = true}) async {
     try {
       if (!isRunning) return null;
 
@@ -241,8 +249,10 @@ class RunService {
       );
 
       // Save to Firestore (skipped in test mode — Firestore is not
-      // initialized in unit tests).
-      if (!_skipPermissionChecks) {
+      // initialized in unit tests). Also skipped when [saveOnStop] is
+      // false; in that case the caller (e.g., the Record flow) is
+      // responsible for persistence via PendingSavesFlusher.
+      if (!_skipPermissionChecks && saveOnStop) {
         await _saveRun(run);
       }
 
@@ -252,6 +262,7 @@ class RunService {
       _currentDistance = 0.0;
       _currentDuration = Duration.zero;
       _lastPosition = null;
+      _lastAccuracy = null;
       _pausedDuration = Duration.zero;
       _isPaused = false;
       _pauseTime = null;
@@ -276,6 +287,7 @@ class RunService {
 
       final newPosition = LatLng(position.latitude, position.longitude);
       _currentRoute.add(newPosition);
+      _lastAccuracy = position.accuracy;
 
       // Calculate distance
       if (_lastPosition != null) {

@@ -29,7 +29,7 @@ class SummaryScreen extends StatelessWidget {
 
     final title = _autoTitle(run.startTime);
     final distanceStr = run.distance.toStringAsFixed(2);
-    final durationStr = _fmtDuration(run.duration);
+    final durationStr = run_model.Run.formatDuration(run.duration);
     final paceStr = _fmtPace(run.averagePace);
 
     return Scaffold(
@@ -190,12 +190,6 @@ class SummaryScreen extends StatelessWidget {
     final m = d.minute.toString().padLeft(2, '0');
     final ampm = d.hour < 12 ? 'AM' : 'PM';
     return 'Today · $h:$m $ampm';
-  }
-
-  static String _fmtDuration(Duration d) {
-    final mm = d.inMinutes;
-    final ss = d.inSeconds % 60;
-    return '${mm.toString()}:${ss.toString().padLeft(2, '0')}';
   }
 
   static String _fmtPace(double minutesPerKm) {
