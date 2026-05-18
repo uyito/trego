@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'auth/login_screen.dart';
 import 'auth/register_screen.dart';
+import 'metrics/metrics_api_client.dart';
+import 'metrics/metrics_provider.dart';
 import 'navigation/app_shell.dart';
 import 'providers/app_state_provider.dart';
 import 'providers/feed_provider.dart';
 import 'providers/loading_provider.dart';
 import 'providers/plan_provider.dart';
 import 'shared/alert_service.dart';
+import 'shared/api_client.dart';
 import 'shared/connectivity_status_widget.dart';
 import 'shared/realtime_notification_manager.dart';
 import 'shared/theme/appearance_controller.dart';
@@ -47,9 +50,23 @@ class _TregoAppState extends State<TregoApp> {
           create: (_) => PendingSavesFlusher(saver: FirestoreRunSaver())..start(),
           dispose: (_, __) {},
         ),
+        Provider<MetricsApiClient>(
+          create: (_) => MetricsApiClient(http: ApiClient.instance),
+        ),
+        ChangeNotifierProvider<MetricsProvider>(
+          create: (ctx) => MetricsProvider(client: ctx.read<MetricsApiClient>()),
+        ),
       ],
       child: Consumer2<AppStateProvider, AppearanceController>(
         builder: (context, appState, appearance, _) {
+          // Drop cached metrics on sign-out.
+          if (!appState.isAuthenticated &&
+              context.read<MetricsProvider>().hasData) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              context.read<MetricsProvider>().clear();
+            });
+          }
           if (appState.isInitializing) {
             return MaterialApp(
               home: Scaffold(
