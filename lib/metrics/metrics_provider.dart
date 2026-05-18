@@ -20,6 +20,9 @@ class MetricsProvider extends ChangeNotifier {
 
   /// Fetch from API if cached value is older than [maxAge]. No-op otherwise.
   Future<void> refresh({Duration maxAge = const Duration(minutes: 5)}) async {
+    // Guard against concurrent fetches: if a refresh is already in flight,
+    // skip this call. The in-flight call will eventually notify all listeners.
+    if (_loading) return;
     if (!_isStale(maxAge)) return;
     _loading = true;
     notifyListeners();

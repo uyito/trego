@@ -127,4 +127,16 @@ void main() {
     expect(p.hasData, isFalse);
     expect(notified, 1);
   });
+
+  test('concurrent refresh calls de-duplicate', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture();
+    final p = MetricsProvider(client: api);
+
+    final f1 = p.refresh();
+    final f2 = p.refresh();
+    await Future.wait([f1, f2]);
+
+    expect(api.fetchCallCount, 1,
+        reason: 'second concurrent refresh should be a no-op while loading');
+  });
 }
