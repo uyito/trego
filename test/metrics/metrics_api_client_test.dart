@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:trego/metrics/metrics_api_client.dart';
-import 'package:trego/metrics/metrics_models.dart';
 import 'package:trego/shared/api_client.dart';
 
 class _FakeApiClient implements ApiClient {
