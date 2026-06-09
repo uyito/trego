@@ -139,4 +139,57 @@ void main() {
     expect(api.fetchCallCount, 1,
         reason: 'second concurrent refresh should be a no-op while loading');
   });
+
+  test('refresh stashes prior snapshot before overwriting', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture(
+      computedAt: DateTime.parse('2026-05-19T10:00:00Z'),
+    );
+    final p = MetricsProvider(client: api);
+
+    await p.refresh();
+    final first = p.snapshot;
+    expect(p.previousSnapshot, isNull,
+        reason: 'no prior snapshot on first ever refresh');
+
+    api.nextSnapshot = _snapshotFixture(
+      computedAt: DateTime.parse('2026-05-19T11:00:00Z'),
+    );
+    await p.refresh(maxAge: Duration.zero);
+
+    expect(p.previousSnapshot, equals(first),
+        reason: 'previousSnapshot reflects the snapshot we had just before this refresh');
+    expect(p.snapshot, isNot(equals(first)));
+  });
+
+  test('refresh failure does not overwrite previousSnapshot', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture();
+    final p = MetricsProvider(client: api);
+    await p.refresh();
+    final first = p.snapshot;
+    expect(p.previousSnapshot, isNull);
+
+    api.throwOnFetch = Exception('boom');
+    await p.refresh(maxAge: Duration.zero);
+
+    expect(p.previousSnapshot, isNull,
+        reason: 'failed fetch should not touch previousSnapshot');
+    expect(p.snapshot, equals(first),
+        reason: 'failed fetch keeps the existing snapshot');
+  });
+
+  test('clear nulls both snapshot and previousSnapshot', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture();
+    final p = MetricsProvider(client: api);
+    await p.refresh();
+    api.nextSnapshot = _snapshotFixture(
+      computedAt: DateTime.parse('2026-05-19T11:00:00Z'),
+    );
+    await p.refresh(maxAge: Duration.zero);
+    expect(p.snapshot, isNotNull);
+    expect(p.previousSnapshot, isNotNull);
+
+    p.clear();
+    expect(p.snapshot, isNull);
+    expect(p.previousSnapshot, isNull);
+  });
 }
