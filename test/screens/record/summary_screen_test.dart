@@ -1,12 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:trego/metrics/metrics_models.dart';
+import 'package:trego/metrics/metrics_provider.dart';
 import 'package:trego/screens/record/summary_screen.dart';
 import 'package:trego/tracker/record_state.dart';
 import 'package:trego/tracker/run_model.dart';
 import 'package:trego/tracker/session_controller.dart';
 import 'package:trego/widgets/core/route_map.dart';
 import '../../helpers/test_app.dart';
+
+/// Minimal MetricsProvider stand-in for tests that don't care about metrics
+/// but need to pump SummaryScreen (which watches MetricsProvider).
+class _NullMetricsProvider extends ChangeNotifier implements MetricsProvider {
+  @override MetricsSnapshot? get snapshot => null;
+  @override MetricsSnapshot? get previousSnapshot => null;
+  @override bool get hasData => false;
+  @override bool get loading => false;
+  @override Object? get lastError => null;
+  @override Future<void> refresh({Duration maxAge = const Duration(minutes: 5)}) async {}
+  @override Future<void> recomputeAndRefresh() async {}
+  @override void clear() {}
+  @override noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+Widget _wrap(Widget child, FakeSessionController c) {
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider<MetricsProvider>.value(value: _NullMetricsProvider()),
+      ChangeNotifierProvider<SessionController>.value(value: c),
+    ],
+    child: testApp(child),
+  );
+}
 
 class FakeSessionController extends ChangeNotifier implements SessionController {
   FakeSessionController({
@@ -51,10 +77,7 @@ void main() {
 
   testWidgets('renders title + hero stats', (tester) async {
     final c = FakeSessionController()..fill(run: _run());
-    await tester.pumpWidget(ChangeNotifierProvider<SessionController>.value(
-      value: c,
-      child: testApp(const SummaryScreen()),
-    ));
+    await tester.pumpWidget(_wrap(const SummaryScreen(), c));
     expect(find.text('Morning Run'), findsOneWidget);
     expect(find.text('5.20'), findsOneWidget);
     expect(find.text('24:13'), findsOneWidget);
@@ -62,19 +85,13 @@ void main() {
 
   testWidgets('shows offline banner when offlineQueued is true', (tester) async {
     final c = FakeSessionController(offlineQueued: true)..fill(run: _run());
-    await tester.pumpWidget(ChangeNotifierProvider<SessionController>.value(
-      value: c,
-      child: testApp(const SummaryScreen()),
-    ));
+    await tester.pumpWidget(_wrap(const SummaryScreen(), c));
     expect(find.textContaining('Offline'), findsOneWidget);
   });
 
   testWidgets('× invokes exitSummary', (tester) async {
     final c = FakeSessionController()..fill(run: _run());
-    await tester.pumpWidget(ChangeNotifierProvider<SessionController>.value(
-      value: c,
-      child: testApp(const SummaryScreen()),
-    ));
+    await tester.pumpWidget(_wrap(const SummaryScreen(), c));
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
     expect(c.exitCalled, isTrue);

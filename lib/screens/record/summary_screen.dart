@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
 import 'package:provider/provider.dart';
+import '../../metrics/metrics_provider.dart';
+import '../../metrics/widgets/pr_hero_banner.dart';
+import '../../metrics/widgets/weekly_progress_card.dart';
 import '../../shared/theme/context_tokens.dart';
 import '../../shared/theme/trego_tokens.dart';
 import '../../tracker/record_errors.dart';
@@ -16,6 +19,7 @@ class SummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.watch<SessionController>();
+    final mp = context.watch<MetricsProvider>();
     final run = c.lastRun;
     final tokens = context.tokens;
 
@@ -32,9 +36,21 @@ class SummaryScreen extends StatelessWidget {
     final durationStr = run_model.Run.formatDuration(run.duration);
     final paceStr = _fmtPace(run.averagePace);
 
+    final snap = mp.snapshot;
+    final prevSnap = mp.previousSnapshot;
+    final previousWeek = snap == null || snap.history.isEmpty ? null : snap.history.last;
+
     return Scaffold(
       backgroundColor: tokens.canvas,
       body: CustomScrollView(slivers: [
+        // PR banner — top-most when applicable.
+        SliverToBoxAdapter(
+          child: PrHeroBanner(
+            prs: snap?.prs,
+            previousPrs: prevSnap?.prs,
+            runId: run.id,
+          ),
+        ),
         SliverToBoxAdapter(
           child: Container(
             padding: EdgeInsets.only(
@@ -149,10 +165,19 @@ class SummaryScreen extends StatelessWidget {
                   style: context.typo.label.copyWith(color: tokens.inkMuted)),
               const SizedBox(height: Space.sm),
               ..._buildSplits(run, context),
-              const SizedBox(height: Space.xxl),
+              const SizedBox(height: Space.lg),
             ]),
           ),
         ),
+        // Weekly progress card — bottom of the summary.
+        if (snap != null)
+          SliverToBoxAdapter(
+            child: WeeklyProgressCard(
+              thisWeek: snap.thisWeek,
+              previousWeek: previousWeek,
+            ),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: Space.xxl)),
       ]),
     );
   }
