@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trego/metrics/metrics_api_client.dart';
 import 'package:trego/metrics/metrics_models.dart';
@@ -24,6 +26,17 @@ class _FakeMetricsApi implements MetricsApiClient {
     if (throwOnRecompute != null) throw throwOnRecompute!;
     return nextRecomputedAt;
   }
+}
+
+class _ControllableMetricsApi implements MetricsApiClient {
+  Completer<MetricsSnapshot> _completer = Completer();
+  void complete(MetricsSnapshot snap) => _completer.complete(snap);
+
+  @override
+  Future<MetricsSnapshot> fetchSnapshot() => _completer.future;
+
+  @override
+  Future<DateTime> recompute() async => DateTime.now();
 }
 
 MetricsSnapshot _snapshotFixture({DateTime? computedAt}) => MetricsSnapshot(
@@ -190,6 +203,24 @@ void main() {
 
     p.clear();
     expect(p.snapshot, isNull);
+    expect(p.previousSnapshot, isNull);
+  });
+
+  test('clear during in-flight refresh discards the fetched snapshot', () async {
+    // Use a controllable fake whose fetchSnapshot returns a Completer-backed
+    // Future so the test can interleave clear() between the await and the
+    // assignment.
+    final controllable = _ControllableMetricsApi();
+    final p = MetricsProvider(client: controllable);
+
+    final inFlight = p.refresh();
+    // While the fetch is pending, clear() out.
+    p.clear();
+    // Now let the fetch complete.
+    controllable.complete(_snapshotFixture());
+    await inFlight;
+
+    expect(p.snapshot, isNull, reason: 'clear() must win over in-flight fetch');
     expect(p.previousSnapshot, isNull);
   });
 }

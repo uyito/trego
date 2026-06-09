@@ -12,6 +12,11 @@ class MetricsProvider extends ChangeNotifier {
   bool _loading = false;
   Object? _lastError;
 
+  /// Bumped by [clear] (and any other state-resetting operation). Captured by
+  /// [refresh] before awaiting; refresh discards its result if the counter
+  /// changed mid-flight. Race-proof against clear-while-fetching.
+  int _refreshGeneration = 0;
+
   MetricsProvider({required MetricsApiClient client}) : _client = client;
 
   MetricsSnapshot? get snapshot => _snapshot;
@@ -31,10 +36,14 @@ class MetricsProvider extends ChangeNotifier {
     // skip this call. The in-flight call will eventually notify all listeners.
     if (_loading) return;
     if (!_isStale(maxAge)) return;
+    final myGen = _refreshGeneration;
     _loading = true;
     notifyListeners();
     try {
       final newSnapshot = await _client.fetchSnapshot();
+      // If clear() (or another resetter) bumped the generation while we were
+      // in flight, discard this result — the state was intentionally reset.
+      if (myGen != _refreshGeneration) return;
       // Stash AFTER the fetch succeeds — a failed fetch must not touch the
       // previousSnapshot/snapshot relationship.
       _previousSnapshot = _snapshot;
@@ -42,6 +51,7 @@ class MetricsProvider extends ChangeNotifier {
       _lastFetchedAt = DateTime.now();
       _lastError = null;
     } catch (e) {
+      if (myGen != _refreshGeneration) return;
       _lastError = e;
       // Keep prior snapshot AND previousSnapshot on error.
     } finally {
@@ -62,8 +72,10 @@ class MetricsProvider extends ChangeNotifier {
     await refresh(maxAge: Duration.zero);
   }
 
-  /// Drop cached state — call on sign-out.
+  /// Drop cached state — call on sign-out. Any in-flight [refresh] will
+  /// observe the bumped generation and discard its result.
   void clear() {
+    _refreshGeneration++;
     _snapshot = null;
     _previousSnapshot = null;
     _lastFetchedAt = null;
