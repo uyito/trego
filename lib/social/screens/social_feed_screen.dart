@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../social_service.dart';
+import '../widgets/comments_sheet.dart';
+import '../widgets/edit_post_dialog.dart';
+import '../widgets/report_dialog.dart';
 
 class SocialFeedScreen extends StatefulWidget {
-  const SocialFeedScreen({super.key});
+  /// Injectable for tests; defaults to a real [SocialService].
+  final SocialService? service;
+
+  const SocialFeedScreen({super.key, this.service});
 
   @override
   State<SocialFeedScreen> createState() => _SocialFeedScreenState();
 }
 
 class _SocialFeedScreenState extends State<SocialFeedScreen> {
-  final SocialService _socialService = SocialService();
+  late final SocialService _socialService = widget.service ?? SocialService();
   final ScrollController _scrollController = ScrollController();
   
   List<Map<String, dynamic>> _posts = [];
@@ -216,14 +223,15 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
   }
 
   Widget _buildPostMenu(Map<String, dynamic> post) {
+    final isOwn = post['isOwn'] == true;
     return PopupMenuButton<String>(
       onSelected: (value) => _handlePostAction(value, post),
       itemBuilder: (context) => [
-        PopupMenuItem(value: 'report', child: Text('Report')),
-        if (post['isOwn'] == true) ...[
-          PopupMenuItem(value: 'edit', child: Text('Edit')),
-          PopupMenuItem(value: 'delete', child: Text('Delete')),
-        ],
+        if (isOwn) ...[
+          const PopupMenuItem(value: 'edit', child: Text('Edit')),
+          const PopupMenuItem(value: 'delete', child: Text('Delete')),
+        ] else
+          const PopupMenuItem(value: 'report', child: Text('Report')),
       ],
     );
   }
@@ -369,30 +377,101 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
   }
 
   void _showCommentsDialog(Map<String, dynamic> post) {
-    // TODO: Implement comments dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Comments feature coming soon!')),
+    CommentsSheet.show(
+      context,
+      postId: post['id'],
+      service: _socialService,
+      onCommentAdded: () {
+        if (mounted) {
+          setState(() => post['commentsCount'] = (post['commentsCount'] ?? 0) + 1);
+        }
+      },
     );
   }
 
   void _sharePost(Map<String, dynamic> post) {
-    // TODO: Implement post sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Share feature coming soon!')),
-    );
+    final author = post['author'] as Map<String, dynamic>?;
+    final name = author?['name'] ?? 'Someone';
+    final content = post['content'] ?? '';
+    Share.share('$name on Trego:\n\n$content');
   }
 
   void _handlePostAction(String action, Map<String, dynamic> post) {
     switch (action) {
       case 'report':
-        // TODO: Implement report functionality
+        _reportPost(post);
         break;
       case 'edit':
-        // TODO: Implement edit functionality
+        _editPost(post);
         break;
       case 'delete':
-        // TODO: Implement delete functionality
+        _deletePost(post);
         break;
+    }
+  }
+
+  Future<void> _reportPost(Map<String, dynamic> post) async {
+    final reason = await showReportDialog(context);
+    if (reason == null) return;
+
+    // Fire-and-forget: acknowledge immediately, send in the background.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thanks — we\'ll review this post.')),
+      );
+    }
+    await _socialService.reportPost(post['id'], reason);
+  }
+
+  Future<void> _editPost(Map<String, dynamic> post) async {
+    final newContent = await showEditPostDialog(context, post['content'] ?? '');
+    if (newContent == null) return;
+
+    final updated = await _socialService.updatePost(post['id'], newContent);
+    if (!mounted) return;
+
+    if (updated != null) {
+      setState(() => post['content'] = updated['content'] ?? newContent);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update post')),
+      );
+    }
+  }
+
+  Future<void> _deletePost(Map<String, dynamic> post) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete post?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    // Optimistically remove, restore on failure (mirrors _toggleLike).
+    final index = _posts.indexOf(post);
+    if (index == -1) return;
+    setState(() => _posts.removeAt(index));
+
+    final ok = await _socialService.deletePost(post['id']);
+    if (!mounted) return;
+
+    if (!ok) {
+      setState(() => _posts.insert(index, post));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete post')),
+      );
     }
   }
 

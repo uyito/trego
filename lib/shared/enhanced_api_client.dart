@@ -232,6 +232,22 @@ class EnhancedApiClient {
     }
   }
 
+  Future<ApiResponse<T>> patch<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    try {
+      if (!_isOnline) {
+        await _queueRequest('PATCH', path, data: data, queryParameters: queryParameters);
+        return ApiResponse.failure('Request queued for when online', ApiErrorType.network);
+      }
+
+      final response = await _dio.patch(path, data: data, queryParameters: queryParameters);
+      return ApiResponse.success(response.data);
+    } on DioException catch (e) {
+      return _handleDioError<T>(e);
+    } catch (e) {
+      return ApiResponse.failure('Unexpected error: $e', ApiErrorType.unknown);
+    }
+  }
+
   Future<ApiResponse<T>> delete<T>(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
       if (!_isOnline) {
