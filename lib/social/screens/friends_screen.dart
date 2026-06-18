@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import '../social_service.dart';
 
 class FriendsScreen extends StatefulWidget {
-  const FriendsScreen({super.key});
+  /// Injectable for tests; defaults to a real [SocialService].
+  final SocialService? service;
+
+  const FriendsScreen({super.key, this.service});
 
   @override
   State<FriendsScreen> createState() => _FriendsScreenState();
 }
 
 class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProviderStateMixin {
-  final SocialService _socialService = SocialService();
+  late final SocialService _socialService = widget.service ?? SocialService();
   late TabController _tabController;
   
   List<Map<String, dynamic>> _friends = [];
@@ -247,9 +250,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             TextField(
               controller: searchController,
               decoration: InputDecoration(
-                labelText: 'Search by username or email',
+                labelText: 'Add by email',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(Icons.email_outlined),
               ),
             ),
             SizedBox(height: 16),
@@ -343,11 +346,25 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   }
 
   Future<void> _cancelRequest(String requestId) async {
-    // TODO: Implement cancel request functionality
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cancel request feature coming soon!')),
-      );
+    try {
+      final success = await _socialService.cancelFriendRequest(requestId);
+      if (!mounted) return;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request cancelled')),
+        );
+        _loadData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to cancel request')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error cancelling request')),
+        );
+      }
     }
   }
 
@@ -400,12 +417,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement unfriend functionality
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Unfriend feature coming soon!')),
-                );
-              }
+              _unfriend(friend);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('Unfriend'),
@@ -413,6 +425,22 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         ],
       ),
     );
+  }
+
+  Future<void> _unfriend(Map<String, dynamic> friend) async {
+    final friendUid = friend['uid'] ?? friend['id'];
+    // Optimistically remove, restore on failure.
+    final index = _friends.indexOf(friend);
+    if (index != -1) setState(() => _friends.removeAt(index));
+
+    final ok = await _socialService.unfriend(friendUid);
+    if (!mounted) return;
+    if (!ok && index != -1) {
+      setState(() => _friends.insert(index, friend));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to unfriend')),
+      );
+    }
   }
 
   String _formatTimestamp(String? timestamp) {

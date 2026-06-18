@@ -153,4 +153,51 @@ void main() {
       expect(await service.deletePost('p1'), isFalse);
     });
   });
+
+  group('sendFriendRequest', () {
+    test('POSTs identifier + message and returns true', () async {
+      api.response = {'success': true, 'status': 'pending'};
+
+      final ok = await service.sendFriendRequest('bob@x.com', message: 'hi');
+
+      expect(api.lastMethod, 'POST');
+      expect(api.lastPath, '/api/social/friends/request');
+      expect(api.lastData, {'identifier': 'bob@x.com', 'message': 'hi'});
+      expect(ok, isTrue);
+    });
+
+    test('returns false on error', () async {
+      api.throwError = true;
+      expect(await service.sendFriendRequest('bob@x.com'), isFalse);
+    });
+  });
+
+  group('cancelFriendRequest', () {
+    test('DELETEs the request and returns true', () async {
+      api.response = {'success': true};
+
+      final ok = await service.cancelFriendRequest('r1');
+
+      expect(api.lastMethod, 'DELETE');
+      expect(api.lastPath, '/api/social/friends/request/r1');
+      expect(ok, isTrue);
+    });
+  });
+
+  group('unfriend', () {
+    test('DELETEs the friendship and returns true', () async {
+      api.response = {'success': true};
+
+      final ok = await service.unfriend('bob-uid');
+
+      expect(api.lastMethod, 'DELETE');
+      expect(api.lastPath, '/api/social/friends/bob-uid');
+      expect(ok, isTrue);
+    });
+
+    test('returns false on error', () async {
+      api.throwError = true;
+      expect(await service.unfriend('bob-uid'), isFalse);
+    });
+  });
 }
