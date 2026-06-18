@@ -26,6 +26,24 @@ class _FakeMetricsApi implements MetricsApiClient {
     if (throwOnRecompute != null) throw throwOnRecompute!;
     return nextRecomputedAt;
   }
+
+  WeeklyGoal nextGoal = const WeeklyGoal();
+  Object? throwOnFetchGoal;
+  Object? throwOnUpdateGoal;
+  int updateGoalCallCount = 0;
+
+  @override
+  Future<WeeklyGoal> fetchGoal() async {
+    if (throwOnFetchGoal != null) throw throwOnFetchGoal!;
+    return nextGoal;
+  }
+
+  @override
+  Future<WeeklyGoal> updateGoal({double? targetKm, int? targetRuns}) async {
+    updateGoalCallCount++;
+    if (throwOnUpdateGoal != null) throw throwOnUpdateGoal!;
+    return WeeklyGoal(targetKm: targetKm, targetRuns: targetRuns);
+  }
 }
 
 class _ControllableMetricsApi implements MetricsApiClient {
@@ -37,6 +55,13 @@ class _ControllableMetricsApi implements MetricsApiClient {
 
   @override
   Future<DateTime> recompute() async => DateTime.now();
+
+  @override
+  Future<WeeklyGoal> fetchGoal() async => const WeeklyGoal();
+
+  @override
+  Future<WeeklyGoal> updateGoal({double? targetKm, int? targetRuns}) async =>
+      WeeklyGoal(targetKm: targetKm, targetRuns: targetRuns);
 }
 
 MetricsSnapshot _snapshotFixture({DateTime? computedAt}) => MetricsSnapshot(
@@ -222,5 +247,54 @@ void main() {
 
     expect(p.snapshot, isNull, reason: 'clear() must win over in-flight fetch');
     expect(p.previousSnapshot, isNull);
+  });
+
+  test('refresh also fetches the goal', () async {
+    final api = _FakeMetricsApi()
+      ..nextSnapshot = _snapshotFixture()
+      ..nextGoal = const WeeklyGoal(targetKm: 25, targetRuns: 4);
+    final p = MetricsProvider(client: api);
+
+    await p.refresh(maxAge: Duration.zero);
+
+    expect(p.goal?.targetKm, 25);
+    expect(p.goal?.targetRuns, 4);
+  });
+
+  test('refresh succeeds even if goal fetch fails', () async {
+    final api = _FakeMetricsApi()
+      ..nextSnapshot = _snapshotFixture()
+      ..throwOnFetchGoal = Exception('goal down');
+    final p = MetricsProvider(client: api);
+
+    await p.refresh(maxAge: Duration.zero);
+
+    expect(p.snapshot, isNotNull);
+    expect(p.goal, isNull);
+  });
+
+  test('setGoal optimistically updates then confirms', () async {
+    final api = _FakeMetricsApi();
+    final p = MetricsProvider(client: api);
+
+    await p.setGoal(targetKm: 30, targetRuns: 5);
+
+    expect(api.updateGoalCallCount, 1);
+    expect(p.goal?.targetKm, 30);
+    expect(p.goal?.targetRuns, 5);
+  });
+
+  test('setGoal reverts on failure', () async {
+    final api = _FakeMetricsApi()..throwOnUpdateGoal = Exception('write failed');
+    final p = MetricsProvider(client: api);
+    // Seed an existing goal via a successful refresh.
+    api.nextSnapshot = _snapshotFixture();
+    api.nextGoal = const WeeklyGoal(targetKm: 10, targetRuns: 2);
+    await p.refresh(maxAge: Duration.zero);
+
+    await p.setGoal(targetKm: 99, targetRuns: 99);
+
+    expect(p.goal?.targetKm, 10, reason: 'should revert to prior goal');
+    expect(p.goal?.targetRuns, 2);
   });
 }

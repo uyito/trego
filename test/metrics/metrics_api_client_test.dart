@@ -8,6 +8,8 @@ class _FakeApiClient implements ApiClient {
   final Map<String, dynamic> nextResponse;
   String? lastGetPath;
   String? lastPostPath;
+  String? lastPutPath;
+  dynamic lastPutData;
 
   _FakeApiClient(this.nextResponse);
 
@@ -46,10 +48,15 @@ class _FakeApiClient implements ApiClient {
   Future<void> loadAuthToken() async {}
   @override
   Future<Response<T>> put<T>(String path,
-          {dynamic data,
-          Map<String, dynamic>? queryParameters,
-          Options? options}) async =>
-      throw UnimplementedError();
+      {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) async {
+    lastPutPath = path;
+    lastPutData = data;
+    return Response<T>(
+      data: nextResponse as T,
+      statusCode: 200,
+      requestOptions: RequestOptions(path: path),
+    );
+  }
   @override
   Future<Response<T>> patch<T>(String path,
           {dynamic data,
@@ -118,5 +125,28 @@ void main() {
 
     expect(fake.lastPostPath, '/metrics/me/recompute');
     expect(at, DateTime.parse('2026-04-27T18:34:12Z'));
+  });
+
+  test('fetchGoal calls GET /metrics/me/goal and parses targets', () async {
+    final fake = _FakeApiClient({'targetKm': 25.0, 'targetRuns': 4});
+    final client = MetricsApiClient(http: fake);
+
+    final goal = await client.fetchGoal();
+
+    expect(fake.lastGetPath, '/metrics/me/goal');
+    expect(goal.targetKm, 25.0);
+    expect(goal.targetRuns, 4);
+  });
+
+  test('updateGoal PUTs targets to /metrics/me/goal and parses result', () async {
+    final fake = _FakeApiClient({'targetKm': 30.0, 'targetRuns': 5});
+    final client = MetricsApiClient(http: fake);
+
+    final goal = await client.updateGoal(targetKm: 30.0, targetRuns: 5);
+
+    expect(fake.lastPutPath, '/metrics/me/goal');
+    expect(fake.lastPutData, {'targetKm': 30.0, 'targetRuns': 5});
+    expect(goal.targetKm, 30.0);
+    expect(goal.targetRuns, 5);
   });
 }

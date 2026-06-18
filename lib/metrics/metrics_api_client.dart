@@ -19,4 +19,22 @@ class MetricsApiClient {
     final response = await _http.post<Map<String, dynamic>>('/metrics/me/recompute');
     return DateTime.parse(response.data!['recomputedAt'] as String);
   }
+
+  /// GET /metrics/me/goal — the user's weekly goal (all-null when unset).
+  Future<WeeklyGoal> fetchGoal() async {
+    final response = await _http.get<Map<String, dynamic>>('/metrics/me/goal');
+    return WeeklyGoal.fromJson(response.data ?? const {});
+  }
+
+  /// PUT /metrics/me/goal — set targets (either may be null). Returns the stored goal.
+  Future<WeeklyGoal> updateGoal({double? targetKm, int? targetRuns}) async {
+    final response = await _http.put<Map<String, dynamic>>(
+      '/metrics/me/goal',
+      data: {
+        if (targetKm != null) 'targetKm': targetKm,
+        if (targetRuns != null) 'targetRuns': targetRuns,
+      },
+    );
+    return WeeklyGoal.fromJson(response.data ?? const {});
+  }
 }

@@ -178,3 +178,29 @@ class MetricsSnapshot {
         'history': history.map((w) => w.toJson()).toList(),
       };
 }
+
+/// A user's weekly training goal. Both targets are optional (a user may set a
+/// distance target, a run-count target, both, or neither).
+class WeeklyGoal {
+  final double? targetKm;
+  final int? targetRuns;
+  final DateTime? updatedAt;
+
+  const WeeklyGoal({this.targetKm, this.targetRuns, this.updatedAt});
+
+  /// True when neither target is set.
+  bool get isEmpty => targetKm == null && targetRuns == null;
+
+  factory WeeklyGoal.fromJson(Map<String, dynamic> j) => WeeklyGoal(
+        targetKm: (j['targetKm'] as num?)?.toDouble(),
+        targetRuns: (j['targetRuns'] as num?)?.toInt(),
+        updatedAt: j['updatedAt'] != null
+            ? DateTime.tryParse(j['updatedAt'] as String)
+            : null,
+      );
+
+  Map<String, dynamic> toJson() => {
+        if (targetKm != null) 'targetKm': targetKm,
+        if (targetRuns != null) 'targetRuns': targetRuns,
+      };
+}
