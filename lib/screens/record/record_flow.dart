@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../metrics/metrics_provider.dart';
 import '../../providers/app_state_provider.dart';
 import '../../tracker/auto_pause_detector.dart';
 import '../../tracker/pending_saves_flusher.dart';
@@ -79,6 +80,9 @@ class _RecordFlowState extends State<RecordFlow> {
         // Still on StopConfirm; controller advances automatically.
         break;
       case RecordState.summary:
+        // Trigger backend metrics recompute. Fire-and-forget; failure is
+        // handled by the backend's stale-fallback on next read.
+        context.read<MetricsProvider>().recomputeAndRefresh();
         nav.pushReplacement(MaterialPageRoute(
           builder: (_) => const SummaryScreen(),
         ));
@@ -171,4 +175,43 @@ class _RunServiceAdapter implements SessionRunService {
 
   @override
   Stream<Object> get errorStream => _inner.errorStream;
+}
+
+/// Listens to a session-state notifier and, on transition to
+/// [RecordState.summary], invokes `MetricsProvider.recomputeAndRefresh()`
+/// exactly once per transition. Generic over the notifier type so tests
+/// can substitute a fake without depending on [SessionController]'s full
+/// surface. Used by [RecordFlow] internally and by tests directly.
+class RecordFlowSummaryHook<T extends ChangeNotifier> extends StatefulWidget {
+  final RecordState Function(T notifier) stateOf;
+  final Widget child;
+
+  const RecordFlowSummaryHook({
+    super.key,
+    required this.stateOf,
+    this.child = const SizedBox.shrink(),
+  });
+
+  @override
+  State<RecordFlowSummaryHook<T>> createState() =>
+      _RecordFlowSummaryHookState<T>();
+}
+
+class _RecordFlowSummaryHookState<T extends ChangeNotifier>
+    extends State<RecordFlowSummaryHook<T>> {
+  RecordState? _last;
+
+  @override
+  Widget build(BuildContext context) {
+    final notifier = context.watch<T>();
+    final current = widget.stateOf(notifier);
+    if (current == RecordState.summary && _last != RecordState.summary) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<MetricsProvider>().recomputeAndRefresh();
+      });
+    }
+    _last = current;
+    return widget.child;
+  }
 }
