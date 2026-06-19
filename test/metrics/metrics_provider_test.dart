@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trego/metrics/metrics_api_client.dart';
 import 'package:trego/metrics/metrics_models.dart';
@@ -24,6 +26,17 @@ class _FakeMetricsApi implements MetricsApiClient {
     if (throwOnRecompute != null) throw throwOnRecompute!;
     return nextRecomputedAt;
   }
+}
+
+class _ControllableMetricsApi implements MetricsApiClient {
+  Completer<MetricsSnapshot> _completer = Completer();
+  void complete(MetricsSnapshot snap) => _completer.complete(snap);
+
+  @override
+  Future<MetricsSnapshot> fetchSnapshot() => _completer.future;
+
+  @override
+  Future<DateTime> recompute() async => DateTime.now();
 }
 
 MetricsSnapshot _snapshotFixture({DateTime? computedAt}) => MetricsSnapshot(
@@ -138,5 +151,76 @@ void main() {
 
     expect(api.fetchCallCount, 1,
         reason: 'second concurrent refresh should be a no-op while loading');
+  });
+
+  test('refresh stashes prior snapshot before overwriting', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture(
+      computedAt: DateTime.parse('2026-05-19T10:00:00Z'),
+    );
+    final p = MetricsProvider(client: api);
+
+    await p.refresh();
+    final first = p.snapshot;
+    expect(p.previousSnapshot, isNull,
+        reason: 'no prior snapshot on first ever refresh');
+
+    api.nextSnapshot = _snapshotFixture(
+      computedAt: DateTime.parse('2026-05-19T11:00:00Z'),
+    );
+    await p.refresh(maxAge: Duration.zero);
+
+    expect(p.previousSnapshot, equals(first),
+        reason: 'previousSnapshot reflects the snapshot we had just before this refresh');
+    expect(p.snapshot, isNot(equals(first)));
+  });
+
+  test('refresh failure does not overwrite previousSnapshot', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture();
+    final p = MetricsProvider(client: api);
+    await p.refresh();
+    final first = p.snapshot;
+    expect(p.previousSnapshot, isNull);
+
+    api.throwOnFetch = Exception('boom');
+    await p.refresh(maxAge: Duration.zero);
+
+    expect(p.previousSnapshot, isNull,
+        reason: 'failed fetch should not touch previousSnapshot');
+    expect(p.snapshot, equals(first),
+        reason: 'failed fetch keeps the existing snapshot');
+  });
+
+  test('clear nulls both snapshot and previousSnapshot', () async {
+    final api = _FakeMetricsApi()..nextSnapshot = _snapshotFixture();
+    final p = MetricsProvider(client: api);
+    await p.refresh();
+    api.nextSnapshot = _snapshotFixture(
+      computedAt: DateTime.parse('2026-05-19T11:00:00Z'),
+    );
+    await p.refresh(maxAge: Duration.zero);
+    expect(p.snapshot, isNotNull);
+    expect(p.previousSnapshot, isNotNull);
+
+    p.clear();
+    expect(p.snapshot, isNull);
+    expect(p.previousSnapshot, isNull);
+  });
+
+  test('clear during in-flight refresh discards the fetched snapshot', () async {
+    // Use a controllable fake whose fetchSnapshot returns a Completer-backed
+    // Future so the test can interleave clear() between the await and the
+    // assignment.
+    final controllable = _ControllableMetricsApi();
+    final p = MetricsProvider(client: controllable);
+
+    final inFlight = p.refresh();
+    // While the fetch is pending, clear() out.
+    p.clear();
+    // Now let the fetch complete.
+    controllable.complete(_snapshotFixture());
+    await inFlight;
+
+    expect(p.snapshot, isNull, reason: 'clear() must win over in-flight fetch');
+    expect(p.previousSnapshot, isNull);
   });
 }
