@@ -1,7 +1,10 @@
 import '../shared/api_client.dart';
 
 class SocialService {
-  final ApiClient _apiClient = ApiClient.instance;
+  final ApiClient _apiClient;
+
+  /// [apiClient] is injectable for tests; defaults to the shared singleton.
+  SocialService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient.instance;
 
   // Friends Management
   Future<bool> sendFriendRequest(String friendId, {String? message}) async {
@@ -192,10 +195,64 @@ class SocialService {
       final response = await _apiClient.post('/api/social/posts/$postId/comment', data: {
         'content': content,
       });
-      
+
       return response.data['success'] == true;
     } catch (e) {
       print('Comment on post failed: $e');
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getComments(String postId) async {
+    try {
+      final response = await _apiClient.get('/api/social/posts/$postId/comments');
+
+      if (response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['comments']);
+      }
+    } catch (e) {
+      print('Get comments failed: $e');
+    }
+
+    return [];
+  }
+
+  Future<bool> reportPost(String postId, String reason) async {
+    try {
+      final response = await _apiClient.post('/api/social/posts/$postId/report', data: {
+        'reason': reason,
+      });
+
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Report post failed: $e');
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> updatePost(String postId, String content) async {
+    try {
+      final response = await _apiClient.patch('/api/social/posts/$postId', data: {
+        'content': content,
+      });
+
+      if (response.data['success'] == true) {
+        return response.data['post'];
+      }
+    } catch (e) {
+      print('Update post failed: $e');
+    }
+
+    return null;
+  }
+
+  Future<bool> deletePost(String postId) async {
+    try {
+      final response = await _apiClient.delete('/api/social/posts/$postId');
+
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Delete post failed: $e');
       return false;
     }
   }

@@ -91,6 +91,27 @@ class ApiClient {
     }
   }
 
+  Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    final response = await _enhancedClient.patch<T>(path, data: data, queryParameters: queryParameters);
+    if (response.isSuccess) {
+      return Response<T>(
+        data: response.data,
+        statusCode: 200,
+        requestOptions: RequestOptions(path: path),
+      );
+    } else {
+      throw ApiException(
+        message: response.error ?? 'Unknown error',
+        statusCode: _getStatusCodeFromErrorType(response.errorType),
+      );
+    }
+  }
+
   Future<Response<T>> delete<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
