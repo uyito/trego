@@ -7,16 +7,40 @@ class SocialService {
   SocialService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient.instance;
 
   // Friends Management
-  Future<bool> sendFriendRequest(String friendId, {String? message}) async {
+  /// [identifier] is an email (username support is a follow-up); the backend
+  /// resolves it to a user and creates the request.
+  Future<bool> sendFriendRequest(String identifier, {String? message}) async {
     try {
       final response = await _apiClient.post('/api/social/friends/request', data: {
-        'friendId': friendId,
+        'identifier': identifier,
         'message': message,
       });
-      
+
       return response.data['success'] == true;
     } catch (e) {
       print('Friend request failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> cancelFriendRequest(String requestId) async {
+    try {
+      final response = await _apiClient.delete('/api/social/friends/request/$requestId');
+
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Cancel friend request failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> unfriend(String friendUid) async {
+    try {
+      final response = await _apiClient.delete('/api/social/friends/$friendUid');
+
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Unfriend failed: $e');
       return false;
     }
   }
