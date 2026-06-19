@@ -55,6 +55,9 @@ dependencies:
   # State management
   provider: ^6.1.1
   shared_preferences: ^2.2.2
+
+  # OS share sheet
+  share_plus: ^10.0.0
   
   # JSON serialization
   json_annotation: ^4.8.1

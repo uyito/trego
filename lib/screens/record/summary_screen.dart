@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../metrics/metrics_models.dart';
 import '../../metrics/metrics_provider.dart';
 import '../../metrics/widgets/pr_hero_banner.dart';
 import '../../metrics/widgets/weekly_progress_card.dart';
@@ -12,6 +14,7 @@ import '../../tracker/session_controller.dart';
 import '../../widgets/core/big_stat.dart';
 import '../../widgets/core/route_map.dart';
 import '../../widgets/core/split_row.dart';
+import 'summary_share_text.dart';
 
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
@@ -31,10 +34,10 @@ class SummaryScreen extends StatelessWidget {
       );
     }
 
-    final title = _autoTitle(run.startTime);
+    final title = autoRunTitle(run.startTime);
     final distanceStr = run.distance.toStringAsFixed(2);
     final durationStr = run_model.Run.formatDuration(run.duration);
-    final paceStr = _fmtPace(run.averagePace);
+    final paceStr = formatPace(run.averagePace);
 
     final snap = mp.snapshot;
     final prevSnap = mp.previousSnapshot;
@@ -77,7 +80,12 @@ class SummaryScreen extends StatelessWidget {
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: () { /* OS share hooked in follow-up spec */ },
+                    onPressed: () => _shareRun(
+                      run: run,
+                      title: title,
+                      prs: snap?.prs,
+                      previousPrs: prevSnap?.prs,
+                    ),
                     child: Text(
                       'SHARE',
                       style: context.typo.button.copyWith(color: tokens.onBrand),
@@ -202,14 +210,6 @@ class SummaryScreen extends StatelessWidget {
     });
   }
 
-  static String _autoTitle(DateTime start) {
-    final h = start.hour;
-    if (h < 11) return 'Morning Run';
-    if (h < 17) return 'Afternoon Run';
-    if (h < 21) return 'Evening Run';
-    return 'Night Run';
-  }
-
   static String _dateLabel(DateTime d) {
     final h = d.hour == 0 ? 12 : (d.hour > 12 ? d.hour - 12 : d.hour);
     final m = d.minute.toString().padLeft(2, '0');
@@ -217,10 +217,17 @@ class SummaryScreen extends StatelessWidget {
     return 'Today · $h:$m $ampm';
   }
 
-  static String _fmtPace(double minutesPerKm) {
-    final total = (minutesPerKm * 60).round();
-    final mm = total ~/ 60;
-    final ss = total % 60;
-    return '$mm:${ss.toString().padLeft(2, '0')}';
+  void _shareRun({
+    required run_model.Run run,
+    required String title,
+    required Prs? prs,
+    required Prs? previousPrs,
+  }) {
+    final text = buildShareText(
+      run: run,
+      prs: prs,
+      previousPrs: previousPrs,
+    );
+    Share.share(text, subject: title);
   }
 }

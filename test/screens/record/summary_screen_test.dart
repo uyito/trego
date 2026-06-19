@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:trego/metrics/metrics_models.dart';
@@ -95,5 +96,30 @@ void main() {
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
     expect(c.exitCalled, isTrue);
+  });
+
+  testWidgets('SHARE invokes OS share sheet with run text', (tester) async {
+    const channel = MethodChannel('dev.fluttercommunity.plus/share');
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+      calls.add(call);
+      return null;
+    });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    final c = FakeSessionController()..fill(run: _run());
+    await tester.pumpWidget(_wrap(const SummaryScreen(), c));
+    await tester.tap(find.text('SHARE'));
+    await tester.pump();
+
+    expect(calls, isNotEmpty);
+    final args = calls.first.arguments as Map;
+    expect(args['text'], contains('Morning Run'));
+    expect(args['text'], contains('5.20 km'));
+    expect(args['subject'], 'Morning Run');
   });
 }
