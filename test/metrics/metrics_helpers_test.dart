@@ -244,4 +244,59 @@ void main() {
       expect(delta.runsDir, DeltaDirection.flat);
     });
   });
+
+  group('goalProgress', () {
+    test('null goal → no targets', () {
+      final p = goalProgress(_wk(km: 10, runs: 2), null);
+      expect(p.hasKm, isFalse);
+      expect(p.hasRuns, isFalse);
+      expect(p.allMet, isFalse);
+    });
+
+    test('empty goal → no targets', () {
+      final p = goalProgress(_wk(km: 10, runs: 2), const WeeklyGoal());
+      expect(p.hasKm, isFalse);
+      expect(p.hasRuns, isFalse);
+    });
+
+    test('partial km progress', () {
+      final p = goalProgress(_wk(km: 10, runs: 2), const WeeklyGoal(targetKm: 25));
+      expect(p.hasKm, isTrue);
+      expect(p.kmFraction, closeTo(0.4, 1e-9));
+      expect(p.kmRemaining, 15);
+      expect(p.hasRuns, isFalse);
+      expect(p.allMet, isFalse);
+    });
+
+    test('km met clamps fraction to 1 and remaining to 0', () {
+      final p = goalProgress(_wk(km: 30, runs: 2), const WeeklyGoal(targetKm: 25));
+      expect(p.kmFraction, 1.0);
+      expect(p.kmRemaining, 0);
+      expect(p.allMet, isTrue);
+    });
+
+    test('both targets, only one met → not allMet', () {
+      final p = goalProgress(
+        _wk(km: 30, runs: 1),
+        const WeeklyGoal(targetKm: 25, targetRuns: 4),
+      );
+      expect(p.kmFraction, 1.0);
+      expect(p.runsFraction, closeTo(0.25, 1e-9));
+      expect(p.runsRemaining, 3);
+      expect(p.allMet, isFalse);
+    });
+
+    test('both targets met → allMet', () {
+      final p = goalProgress(
+        _wk(km: 30, runs: 5),
+        const WeeklyGoal(targetKm: 25, targetRuns: 4),
+      );
+      expect(p.allMet, isTrue);
+    });
+
+    test('non-positive target treated as unset', () {
+      final p = goalProgress(_wk(km: 10), const WeeklyGoal(targetKm: 0));
+      expect(p.hasKm, isFalse);
+    });
+  });
 }

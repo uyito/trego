@@ -8,6 +8,7 @@ class MetricsProvider extends ChangeNotifier {
 
   MetricsSnapshot? _snapshot;
   MetricsSnapshot? _previousSnapshot;
+  WeeklyGoal? _goal;
   DateTime? _lastFetchedAt;
   bool _loading = false;
   Object? _lastError;
@@ -25,6 +26,10 @@ class MetricsProvider extends ChangeNotifier {
   /// Used by the PR hero banner to compute a delta vs the prior best.
   /// Null on first ever refresh and after [clear].
   MetricsSnapshot? get previousSnapshot => _previousSnapshot;
+
+  /// The user's weekly goal. Null until first fetched; an all-null [WeeklyGoal]
+  /// once fetched with nothing set.
+  WeeklyGoal? get goal => _goal;
 
   bool get hasData => _snapshot != null;
   bool get loading => _loading;
@@ -50,6 +55,13 @@ class MetricsProvider extends ChangeNotifier {
       _snapshot = newSnapshot;
       _lastFetchedAt = DateTime.now();
       _lastError = null;
+      // Goal is best-effort and must not fail the snapshot refresh.
+      try {
+        final goal = await _client.fetchGoal();
+        if (myGen == _refreshGeneration) _goal = goal;
+      } catch (_) {
+        // Leave the prior goal in place.
+      }
     } catch (e) {
       if (myGen != _refreshGeneration) return;
       _lastError = e;
@@ -72,12 +84,28 @@ class MetricsProvider extends ChangeNotifier {
     await refresh(maxAge: Duration.zero);
   }
 
+  /// Set the user's weekly goal (optimistic). Reverts on failure.
+  Future<void> setGoal({double? targetKm, int? targetRuns}) async {
+    final previous = _goal;
+    _goal = WeeklyGoal(targetKm: targetKm, targetRuns: targetRuns);
+    notifyListeners();
+    try {
+      _goal = await _client.updateGoal(targetKm: targetKm, targetRuns: targetRuns);
+    } catch (e) {
+      _goal = previous; // revert
+      _lastError = e;
+    } finally {
+      notifyListeners();
+    }
+  }
+
   /// Drop cached state — call on sign-out. Any in-flight [refresh] will
   /// observe the bumped generation and discard its result.
   void clear() {
     _refreshGeneration++;
     _snapshot = null;
     _previousSnapshot = null;
+    _goal = null;
     _lastFetchedAt = null;
     _lastError = null;
     notifyListeners();

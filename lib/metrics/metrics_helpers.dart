@@ -156,3 +156,61 @@ PrEntry? _entryFor(Prs prs, PrCategory cat) {
       return prs.longestDuration;
   }
 }
+
+/// Progress toward a [WeeklyGoal] given the current week's metrics. Fractions are
+/// clamped to [0,1]; `met` is true only when a target exists and is reached.
+class GoalProgress {
+  final double? kmFraction;   // null when no km target
+  final int? kmRemaining;     // whole km remaining (>= 0), null when no km target
+  final double? runsFraction; // null when no runs target
+  final int? runsRemaining;   // runs remaining (>= 0), null when no runs target
+
+  const GoalProgress({
+    this.kmFraction,
+    this.kmRemaining,
+    this.runsFraction,
+    this.runsRemaining,
+  });
+
+  bool get hasKm => kmFraction != null;
+  bool get hasRuns => runsFraction != null;
+
+  /// All set targets are reached. False when no targets are set.
+  bool get allMet {
+    if (!hasKm && !hasRuns) return false;
+    final kmOk = !hasKm || kmFraction! >= 1.0;
+    final runsOk = !hasRuns || runsFraction! >= 1.0;
+    return kmOk && runsOk;
+  }
+}
+
+/// Computes progress of [week] toward [goal]. Targets that are null or
+/// non-positive are treated as unset.
+GoalProgress goalProgress(WeeklyMetrics week, WeeklyGoal? goal) {
+  if (goal == null) return const GoalProgress();
+
+  double? kmFraction;
+  int? kmRemaining;
+  if (goal.targetKm != null && goal.targetKm! > 0) {
+    final frac = week.totalKm / goal.targetKm!;
+    kmFraction = frac.clamp(0.0, 1.0).toDouble();
+    kmRemaining = (goal.targetKm! - week.totalKm).ceil();
+    if (kmRemaining < 0) kmRemaining = 0;
+  }
+
+  double? runsFraction;
+  int? runsRemaining;
+  if (goal.targetRuns != null && goal.targetRuns! > 0) {
+    final frac = week.totalRuns / goal.targetRuns!;
+    runsFraction = frac.clamp(0.0, 1.0).toDouble();
+    runsRemaining = goal.targetRuns! - week.totalRuns;
+    if (runsRemaining < 0) runsRemaining = 0;
+  }
+
+  return GoalProgress(
+    kmFraction: kmFraction,
+    kmRemaining: kmRemaining,
+    runsFraction: runsFraction,
+    runsRemaining: runsRemaining,
+  );
+}

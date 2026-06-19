@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../metrics/metrics_provider.dart';
+import '../metrics/widgets/goal_edit_dialog.dart';
+import '../metrics/widgets/goal_progress_card.dart';
 import '../metrics/widgets/recent_pr_card.dart';
 import '../metrics/widgets/weekly_sparkline.dart';
 import '../metrics/widgets/weekly_stat_strip.dart';
@@ -162,8 +164,19 @@ class _MetricsSection extends StatelessWidget {
         RecentPrCard(prs: snap.prs, now: DateTime.now()),
         const SizedBox(height: Space.sm),
         WeeklySparkline(history: snap.history),
+        GoalProgressCard(
+          thisWeek: snap.thisWeek,
+          goal: mp.goal,
+          onEdit: () => _editGoal(context, mp),
+        ),
       ],
     );
+  }
+
+  Future<void> _editGoal(BuildContext context, MetricsProvider mp) async {
+    final result = await showGoalEditDialog(context, mp.goal);
+    if (result == null) return;
+    await mp.setGoal(targetKm: result.targetKm, targetRuns: result.targetRuns);
   }
 }
 

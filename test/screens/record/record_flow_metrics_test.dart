@@ -18,6 +18,13 @@ class _FakeMetricsApi implements MetricsApiClient {
   }
 
   @override
+  Future<WeeklyGoal> fetchGoal() async => const WeeklyGoal();
+
+  @override
+  Future<WeeklyGoal> updateGoal({double? targetKm, int? targetRuns}) async =>
+      const WeeklyGoal();
+
+  @override
   Future<MetricsSnapshot> fetchSnapshot() async {
     fetchCalls++;
     // Return a minimal valid snapshot so refresh() inside recomputeAndRefresh

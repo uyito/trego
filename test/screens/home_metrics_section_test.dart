@@ -26,6 +26,15 @@ class _FakeMetricsApi implements MetricsApiClient {
 
   @override
   Future<DateTime> recompute() async => DateTime.now();
+
+  WeeklyGoal goal = const WeeklyGoal();
+
+  @override
+  Future<WeeklyGoal> fetchGoal() async => goal;
+
+  @override
+  Future<WeeklyGoal> updateGoal({double? targetKm, int? targetRuns}) async =>
+      WeeklyGoal(targetKm: targetKm, targetRuns: targetRuns);
 }
 
 MetricsSnapshot _snapshot({int totalRuns = 1, double weekKm = 12.0}) =>
