@@ -250,9 +250,9 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             TextField(
               controller: searchController,
               decoration: InputDecoration(
-                labelText: 'Add by email',
+                labelText: 'Add by username or email',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_outlined),
+                prefixIcon: Icon(Icons.person_search),
               ),
             ),
             SizedBox(height: 16),

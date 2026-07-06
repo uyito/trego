@@ -15,6 +15,7 @@ import '../widgets/core/trego_avatar.dart';
 import '../widgets/core/trego_scaffold.dart';
 import 'appearance_settings_screen.dart';
 import 'recording_settings_screen.dart';
+import 'username_edit_screen.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -31,6 +32,17 @@ class YouScreen extends StatelessWidget {
       body: ListView(
         children: [
           _Header(name: displayName),
+          const _SectionLabel(label: 'Profile'),
+          _Row(
+            icon: Icons.alternate_email,
+            title: (auth.user?['username'] as String?) != null
+                ? '@${auth.user!['username']}'
+                : 'Set username',
+            onTap: () => _push(
+              context,
+              UsernameEditScreen(currentUsername: auth.user?['username'] as String?),
+            ),
+          ),
           const _SectionLabel(label: 'Tools'),
           _Row(icon: Icons.restaurant_menu, title: 'Recipes', onTap: () => _push(context, const RecipeScreen())),
           _Row(icon: Icons.calculate_outlined, title: 'TDEE Calculator', onTap: () => _push(context, const TdeeScreen())),
