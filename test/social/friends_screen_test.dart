@@ -136,4 +136,15 @@ void main() {
     expect(svc.respondedId, 'r1');
     expect(svc.respondedAccept, true);
   });
+
+  testWidgets('add-friend dialog offers username or email', (tester) async {
+    final svc = _FakeSocialService();
+    await tester.pumpWidget(wrap(svc));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.person_add));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add by username or email'), findsOneWidget);
+  });
 }
