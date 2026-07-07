@@ -303,10 +303,61 @@ class SocialService {
   Future<bool> markNotificationAsRead(String notificationId) async {
     try {
       final response = await _apiClient.put('/api/social/notifications/$notificationId/read');
-      
+
       return response.data['success'] == true;
     } catch (e) {
       print('Mark notification as read failed: $e');
+      return false;
+    }
+  }
+
+  /// Fetches notifications plus the authoritative total unread count.
+  Future<({List<Map<String, dynamic>> items, int unreadCount})>
+      fetchNotifications({int limit = 50}) async {
+    try {
+      final response = await _apiClient.get('/api/social/notifications',
+          queryParameters: {'limit': limit.toString()});
+
+      if (response.data['success'] == true) {
+        final items = List<Map<String, dynamic>>.from(response.data['notifications'] ?? const []);
+        final unread = (response.data['unreadCount'] as num?)?.toInt() ?? 0;
+        return (items: items, unreadCount: unread);
+      }
+    } catch (e) {
+      print('Fetch notifications failed: $e');
+    }
+    return (items: <Map<String, dynamic>>[], unreadCount: 0);
+  }
+
+  /// Lightweight unread-count fetch for the badge.
+  Future<int> getUnreadNotificationCount() async {
+    try {
+      final response = await _apiClient.get('/api/social/notifications/unread-count');
+      if (response.data['success'] == true) {
+        return (response.data['unreadCount'] as num?)?.toInt() ?? 0;
+      }
+    } catch (e) {
+      print('Get unread count failed: $e');
+    }
+    return 0;
+  }
+
+  Future<bool> markAllNotificationsRead() async {
+    try {
+      final response = await _apiClient.put('/api/social/notifications/read-all');
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Mark all notifications read failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteNotification(String notificationId) async {
+    try {
+      final response = await _apiClient.delete('/api/social/notifications/$notificationId');
+      return response.data['success'] == true;
+    } catch (e) {
+      print('Delete notification failed: $e');
       return false;
     }
   }

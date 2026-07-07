@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../metrics/metrics_provider.dart';
+import '../notifications/notifications_provider.dart';
 import '../screens/feed_placeholder_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/plan_placeholder_screen.dart';
@@ -16,17 +17,34 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   TregoTab _current = TregoTab.home;
 
   @override
   void initState() {
     super.initState();
-    // The default selected tab is Home — kick off the initial metrics fetch.
+    WidgetsBinding.instance.addObserver(this);
+    // The default selected tab is Home — kick off the initial metrics fetch
+    // and populate the notifications badge.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<MetricsProvider>().refresh();
+      context.read<NotificationsProvider>().refreshUnread();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh the unread badge when the app returns to the foreground.
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<NotificationsProvider>().refreshUnread();
+    }
   }
 
   void _switchTab(TregoTab tab) {
@@ -34,6 +52,7 @@ class _AppShellState extends State<AppShell> {
     if (tab == TregoTab.home) {
       // No-op within the 5-min freshness window; fresh fetch otherwise.
       context.read<MetricsProvider>().refresh();
+      context.read<NotificationsProvider>().refreshUnread();
     }
   }
 

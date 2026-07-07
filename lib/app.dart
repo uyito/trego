@@ -4,6 +4,7 @@ import 'auth/login_screen.dart';
 import 'auth/register_screen.dart';
 import 'metrics/metrics_api_client.dart';
 import 'metrics/metrics_provider.dart';
+import 'notifications/notifications_provider.dart';
 import 'navigation/app_shell.dart';
 import 'providers/app_state_provider.dart';
 import 'providers/feed_provider.dart';
@@ -56,15 +57,19 @@ class _TregoAppState extends State<TregoApp> {
         ChangeNotifierProvider<MetricsProvider>(
           create: (ctx) => MetricsProvider(client: ctx.read<MetricsApiClient>()),
         ),
+        ChangeNotifierProvider<NotificationsProvider>(
+          create: (_) => NotificationsProvider(),
+        ),
       ],
       child: Consumer2<AppStateProvider, AppearanceController>(
         builder: (context, appState, appearance, _) {
-          // Drop cached metrics on sign-out.
+          // Drop cached metrics + notifications on sign-out.
           if (!appState.isAuthenticated &&
               context.read<MetricsProvider>().hasData) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!context.mounted) return;
               context.read<MetricsProvider>().clear();
+              context.read<NotificationsProvider>().clear();
             });
           }
           if (appState.isInitializing) {

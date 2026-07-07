@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:trego/auth/auth_service.dart';
+import 'package:trego/notifications/notifications_provider.dart';
 import 'package:trego/shared/ai_status_widget.dart';
 
 class TopBar extends StatefulWidget {
@@ -23,8 +25,7 @@ class TopBar extends StatefulWidget {
 class _TopBarState extends State<TopBar>
     with TickerProviderStateMixin {
   String? _userName;
-  bool _hasUnreadNotifications = false;
-  
+
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
@@ -60,11 +61,7 @@ class _TopBarState extends State<TopBar>
         _userName = user.displayName ?? user.email?.split('@').first ?? 'User';
       });
     }
-    
-    // TODO: Check for unread notifications
-    setState(() {
-      _hasUnreadNotifications = false; // Placeholder
-    });
+    // Unread state is driven by NotificationsProvider (see build()).
   }
 
   void _handleTap(VoidCallback onTap) {
@@ -76,6 +73,7 @@ class _TopBarState extends State<TopBar>
 
   @override
   Widget build(BuildContext context) {
+    final hasUnread = context.watch<NotificationsProvider>().hasUnread;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -188,7 +186,7 @@ class _TopBarState extends State<TopBar>
                               size: 24,
                             ),
                           ),
-                          if (_hasUnreadNotifications)
+                          if (hasUnread)
                             Positioned(
                               top: 8,
                               right: 8,
