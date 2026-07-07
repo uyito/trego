@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:trego/notifications/notifications_provider.dart';
 import 'package:trego/notifications/notifications_screen.dart';
+import 'package:trego/social/screens/friends_screen.dart';
 import 'package:trego/social/social_service.dart';
+import 'package:trego/social/widgets/comments_sheet.dart';
 
 class _FakeSocialService implements SocialService {
   List<Map<String, dynamic>> items;
@@ -33,12 +35,23 @@ class _FakeSocialService implements SocialService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> getComments(String postId) async => const [];
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Map<String, dynamic> _n(String id, {bool read = false, String msg = 'msg'}) => {
+Map<String, dynamic> _n(
+  String id, {
+  bool read = false,
+  String msg = 'msg',
+  String type = 'post_like',
+  String? targetId,
+}) =>
+    {
       'id': id,
-      'type': 'post_like',
+      'type': type,
+      'targetId': targetId,
       'message': msg,
       'read': read,
       'actor': {'name': 'Bob', 'photoURL': null},
@@ -46,8 +59,11 @@ Map<String, dynamic> _n(String id, {bool read = false, String msg = 'msg'}) => {
     };
 
 void main() {
-  Widget wrap(_FakeSocialService svc) => ChangeNotifierProvider(
-        create: (_) => NotificationsProvider(service: svc),
+  Widget wrap(_FakeSocialService svc) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => NotificationsProvider(service: svc)),
+          Provider<SocialService>.value(value: svc),
+        ],
         child: const MaterialApp(home: NotificationsScreen()),
       );
 
@@ -89,5 +105,35 @@ void main() {
 
     expect(svc.markAllCalled, isTrue);
     expect(find.text('Mark all read'), findsNothing); // hidden once unread == 0
+  });
+
+  testWidgets('tapping a friend_request notification marks read + opens Friends', (tester) async {
+    final svc = _FakeSocialService(
+      items: [_n('r', msg: 'Bob sent you a friend request', type: 'friend_request', targetId: 'req1')],
+      unreadCount: 1,
+    );
+    await tester.pumpWidget(wrap(svc));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Bob sent you a friend request'));
+    await tester.pumpAndSettle();
+
+    expect(svc.markedReadId, 'r');
+    expect(find.byType(FriendsScreen), findsOneWidget);
+  });
+
+  testWidgets('tapping a post_comment notification opens the comments sheet', (tester) async {
+    final svc = _FakeSocialService(
+      items: [_n('c', msg: 'Bob commented on your post', type: 'post_comment', targetId: 'p1')],
+      unreadCount: 1,
+    );
+    await tester.pumpWidget(wrap(svc));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Bob commented on your post'));
+    await tester.pumpAndSettle();
+
+    expect(svc.markedReadId, 'c');
+    expect(find.byType(CommentsSheet), findsOneWidget);
   });
 }

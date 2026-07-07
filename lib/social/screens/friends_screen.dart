@@ -5,7 +5,10 @@ class FriendsScreen extends StatefulWidget {
   /// Injectable for tests; defaults to a real [SocialService].
   final SocialService? service;
 
-  const FriendsScreen({super.key, this.service});
+  /// Which tab to open on: 0 = Friends, 1 = Requests.
+  final int initialTab;
+
+  const FriendsScreen({super.key, this.service, this.initialTab = 0});
 
   @override
   State<FriendsScreen> createState() => _FriendsScreenState();
@@ -14,7 +17,7 @@ class FriendsScreen extends StatefulWidget {
 class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProviderStateMixin {
   late final SocialService _socialService = widget.service ?? SocialService();
   late TabController _tabController;
-  
+
   List<Map<String, dynamic>> _friends = [];
   List<Map<String, dynamic>> _friendRequests = [];
   bool _isLoading = false;
@@ -22,7 +25,11 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 1),
+    );
     _loadData();
   }
 

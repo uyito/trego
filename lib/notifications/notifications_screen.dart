@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../social/screens/friends_screen.dart';
+import '../social/social_service.dart';
+import '../social/widgets/comments_sheet.dart';
+import 'notification_destination.dart';
 import 'notifications_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -39,6 +43,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  /// Mark read, then navigate to the notification's target.
+  void _handleTap(Map<String, dynamic> n) {
+    context.read<NotificationsProvider>().markRead(n['id'] as String);
+
+    final destination = notificationDestination(n);
+    switch (destination) {
+      case FriendsDestination(:final tab):
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => FriendsScreen(initialTab: tab)),
+        );
+      case PostCommentsDestination(:final postId):
+        CommentsSheet.show(
+          context,
+          postId: postId,
+          service: context.read<SocialService>(),
+        );
+      case NoDestination():
+        break;
+    }
+  }
+
   Widget _buildBody(NotificationsProvider provider) {
     if (provider.items.isEmpty && provider.loading) {
       return const Center(child: CircularProgressIndicator());
@@ -71,7 +96,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         final n = provider.items[index];
         return _NotificationTile(
           notification: n,
-          onTap: () => provider.markRead(n['id'] as String),
+          onTap: () => _handleTap(n),
           onDelete: () => provider.delete(n['id'] as String),
         );
       },
