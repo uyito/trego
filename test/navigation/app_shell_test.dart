@@ -6,6 +6,7 @@ import 'package:trego/metrics/metrics_api_client.dart';
 import 'package:trego/metrics/metrics_models.dart';
 import 'package:trego/metrics/metrics_provider.dart';
 import 'package:trego/navigation/app_shell.dart';
+import 'package:trego/notifications/notifications_provider.dart';
 import 'package:trego/providers/app_state_provider.dart';
 import 'package:trego/providers/feed_provider.dart';
 import 'package:trego/providers/plan_provider.dart';
@@ -13,6 +14,7 @@ import 'package:trego/tracker/pending_saves_flusher.dart';
 import 'package:trego/tracker/record_preferences.dart';
 import 'package:trego/tracker/run_model.dart';
 
+import '../helpers/stub_social_service.dart';
 import '../helpers/test_app.dart';
 
 class _NoOpRunSaver implements RunSaver {
@@ -78,6 +80,9 @@ Widget _wrap(Widget child, {MetricsProvider? metrics}) =>
           ChangeNotifierProvider(create: (_) => RecordPreferences()),
           ChangeNotifierProvider<MetricsProvider>.value(
             value: metrics ?? MetricsProvider(client: _FakeMetricsApi()),
+          ),
+          ChangeNotifierProvider<NotificationsProvider>(
+            create: (_) => NotificationsProvider(service: StubSocialService()),
           ),
           Provider<PendingSavesFlusher>(
             create: (_) => PendingSavesFlusher(saver: _NoOpRunSaver()),

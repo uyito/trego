@@ -7,9 +7,11 @@ import '../metrics/widgets/recent_pr_card.dart';
 import '../metrics/widgets/weekly_sparkline.dart';
 import '../metrics/widgets/weekly_stat_strip.dart';
 import '../navigation/tab_config.dart';
+import '../notifications/notifications_provider.dart';
+import '../notifications/notifications_screen.dart';
+import '../notifications/widgets/notification_badge.dart';
 import '../providers/feed_provider.dart';
 import '../providers/plan_provider.dart';
-import '../shared/notification_settings_screen.dart';
 import '../shared/theme/context_tokens.dart';
 import '../shared/theme/trego_tokens.dart';
 import '../widgets/core/activity_card.dart';
@@ -42,11 +44,10 @@ class HomeScreen extends StatelessWidget {
         greeting: 'Hello',
         subtitle: summary,
         trailing: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            tooltip: 'Notifications',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
+          _NotificationsBell(
+            unreadCount: context.watch<NotificationsProvider>().unreadCount,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
             ),
           ),
         ],
@@ -223,6 +224,34 @@ class _MetricsSkeleton extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// App-bar bell with an unread-count badge overlay.
+class _NotificationsBell extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const _NotificationsBell({required this.unreadCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Notifications',
+      onPressed: onTap,
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.notifications_none),
+          if (unreadCount > 0)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: NotificationBadge(count: unreadCount),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:trego/metrics/metrics_api_client.dart';
 import 'package:trego/metrics/metrics_models.dart';
 import 'package:trego/metrics/metrics_provider.dart';
+import 'package:trego/notifications/notifications_provider.dart';
 import 'package:trego/providers/feed_provider.dart';
 import 'package:trego/providers/plan_provider.dart';
 import 'package:trego/screens/home_screen.dart';
 import 'package:trego/shared/theme/trego_theme.dart';
+import '../helpers/stub_social_service.dart';
 
 class _FakeMetricsApi implements MetricsApiClient {
   MetricsSnapshot? next;
@@ -66,6 +68,9 @@ Widget _wrap(Widget child, {MetricsProvider? metrics}) => MultiProvider(
         ChangeNotifierProvider(create: (_) => FeedProvider()),
         ChangeNotifierProvider<MetricsProvider>.value(
           value: metrics ?? MetricsProvider(client: _FakeMetricsApi()),
+        ),
+        ChangeNotifierProvider<NotificationsProvider>(
+          create: (_) => NotificationsProvider(service: StubSocialService()),
         ),
       ],
       child: MaterialApp(

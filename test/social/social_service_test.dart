@@ -48,6 +48,16 @@ class _FakeApiClient implements ApiClient {
   }
 
   @override
+  Future<Response<T>> put<T>(String path,
+      {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) async {
+    lastMethod = 'PUT';
+    lastPath = path;
+    lastData = data;
+    if (throwError) throw const ApiException(message: 'boom', statusCode: 500);
+    return _resp<T>(path);
+  }
+
+  @override
   Future<Response<T>> delete<T>(String path,
       {Map<String, dynamic>? queryParameters, Options? options}) async {
     lastMethod = 'DELETE';
@@ -198,6 +208,55 @@ void main() {
     test('returns false on error', () async {
       api.throwError = true;
       expect(await service.unfriend('bob-uid'), isFalse);
+    });
+  });
+
+  group('notifications', () {
+    test('fetchNotifications parses items + unreadCount', () async {
+      api.response = {
+        'success': true,
+        'notifications': [
+          {'id': 'n1', 'message': 'Bob liked your post', 'read': false},
+        ],
+        'unreadCount': 1,
+      };
+
+      final result = await service.fetchNotifications();
+
+      expect(api.lastMethod, 'GET');
+      expect(api.lastPath, '/api/social/notifications');
+      expect(result.items, hasLength(1));
+      expect(result.unreadCount, 1);
+    });
+
+    test('fetchNotifications returns empty on failure', () async {
+      api.throwError = true;
+      final result = await service.fetchNotifications();
+      expect(result.items, isEmpty);
+      expect(result.unreadCount, 0);
+    });
+
+    test('getUnreadNotificationCount hits unread-count endpoint', () async {
+      api.response = {'success': true, 'unreadCount': 4};
+      final count = await service.getUnreadNotificationCount();
+      expect(api.lastPath, '/api/social/notifications/unread-count');
+      expect(count, 4);
+    });
+
+    test('markAllNotificationsRead PUTs read-all', () async {
+      api.response = {'success': true};
+      final ok = await service.markAllNotificationsRead();
+      expect(api.lastMethod, 'PUT');
+      expect(api.lastPath, '/api/social/notifications/read-all');
+      expect(ok, isTrue);
+    });
+
+    test('deleteNotification DELETEs by id', () async {
+      api.response = {'success': true};
+      final ok = await service.deleteNotification('n1');
+      expect(api.lastMethod, 'DELETE');
+      expect(api.lastPath, '/api/social/notifications/n1');
+      expect(ok, isTrue);
     });
   });
 }
