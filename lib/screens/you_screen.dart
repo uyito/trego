@@ -7,7 +7,6 @@ import '../recipes/recipe_screen.dart';
 import '../shared/notification_settings_screen.dart';
 import '../shared/theme/context_tokens.dart';
 import '../shared/theme/trego_tokens.dart';
-import '../social/social_hub.dart';
 import '../tdee/tdee_screen.dart';
 import '../tracker/tracker_dashboard_screen.dart';
 import '../widgets/core/trego_app_bar.dart';
@@ -50,7 +49,6 @@ class YouScreen extends StatelessWidget {
           _Row(icon: Icons.timeline, title: 'Run History', onTap: () => _push(context, const TrackerDashboardScreen())),
           const _SectionLabel(label: 'Activity'),
           _Row(icon: Icons.emoji_events_outlined, title: 'Achievements', onTap: () => _push(context, const AchievementsScreen())),
-          _Row(icon: Icons.people_outline, title: 'Social (legacy)', onTap: () => _push(context, const SocialHub())),
           const _SectionLabel(label: 'Settings'),
           _Row(icon: Icons.notifications_none, title: 'Notifications', onTap: () => _push(context, const NotificationSettingsScreen())),
           _Row(icon: Icons.palette_outlined, title: 'Appearance', onTap: () => _push(context, const AppearanceSettingsScreen())),

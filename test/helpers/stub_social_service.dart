@@ -12,5 +12,14 @@ class StubSocialService implements SocialService {
   Future<int> getUnreadNotificationCount() async => 0;
 
   @override
+  Future<List<Map<String, dynamic>>> getFeed({int limit = 20, int? offset}) async => const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> getFriends() async => const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> getFriendRequests() async => const [];
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trego/social/screens/social_feed_screen.dart';
 import 'package:trego/social/social_service.dart';
+import 'package:trego/shared/theme/trego_theme.dart';
 
 /// Fake SocialService: serves a fixed feed and records action calls. Methods not
 /// overridden fall through noSuchMethod (unused by these tests).
@@ -70,6 +71,7 @@ Map<String, dynamic> _post({
 
 void main() {
   Widget wrap(SocialService service) => MaterialApp(
+        theme: TregoTheme.light(),
         home: SocialFeedScreen(service: service),
       );
 
@@ -194,5 +196,40 @@ void main() {
 
     expect(calls, isNotEmpty);
     expect((calls.first.arguments as Map)['text'], contains('shareable'));
+  });
+
+  group('tab-context chrome', () {
+    testWidgets('shows Feed title, Friends action, and a compose FAB', (tester) async {
+      final svc = _FakeSocialService([_post(id: 'p1', content: 'hi', isOwn: false)]);
+      await tester.pumpWidget(wrap(svc));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Feed'), findsOneWidget);
+      expect(find.byIcon(Icons.people_outline), findsOneWidget); // Friends action
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      // The legacy in-screen bottom nav is gone.
+      expect(find.byType(BottomNavigationBar), findsNothing);
+    });
+
+    testWidgets('compose FAB opens the create-post dialog', (tester) async {
+      final svc = _FakeSocialService([_post(id: 'p1', content: 'hi', isOwn: false)]);
+      await tester.pumpWidget(wrap(svc));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Create Post'), findsOneWidget);
+    });
+
+    testWidgets('empty feed shows the onboarding CTAs', (tester) async {
+      final svc = _FakeSocialService([]);
+      await tester.pumpWidget(wrap(svc));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your feed is quiet'), findsOneWidget);
+      expect(find.text('Find friends'), findsOneWidget);
+      expect(find.text('Create post'), findsOneWidget);
+    });
   });
 }
