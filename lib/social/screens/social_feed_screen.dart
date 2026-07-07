@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../shared/theme/context_tokens.dart';
+import '../../widgets/core/trego_app_bar.dart';
 import '../social_service.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/edit_post_dialog.dart';
 import '../widgets/report_dialog.dart';
+import 'friends_screen.dart';
 
 class SocialFeedScreen extends StatefulWidget {
   /// Injectable for tests; defaults to a real [SocialService].
@@ -12,10 +15,13 @@ class SocialFeedScreen extends StatefulWidget {
   const SocialFeedScreen({super.key, this.service});
 
   @override
-  State<SocialFeedScreen> createState() => _SocialFeedScreenState();
+  SocialFeedScreenState createState() => SocialFeedScreenState();
 }
 
-class _SocialFeedScreenState extends State<SocialFeedScreen> {
+class SocialFeedScreenState extends State<SocialFeedScreen> {
+  /// Re-fetch the feed. Called by the shell when the Feed tab is (re)selected.
+  Future<void> reload() => _loadFeed();
+
   late final SocialService _socialService = widget.service ?? SocialService();
   final ScrollController _scrollController = ScrollController();
   
@@ -87,24 +93,32 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Social Feed'),
-        actions: [
+      backgroundColor: context.tokens.canvas,
+      appBar: TregoAppBar(
+        title: 'Feed',
+        trailing: [
           IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () => Navigator.pushNamed(context, '/notifications'),
-          ),
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _showCreatePostDialog(),
+            icon: const Icon(Icons.people_outline),
+            tooltip: 'Friends',
+            onPressed: _openFriends,
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreatePostDialog,
+        tooltip: 'New post',
+        child: const Icon(Icons.edit),
       ),
       body: RefreshIndicator(
         onRefresh: _loadFeed,
         child: _buildFeedList(),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  void _openFriends() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const FriendsScreen()),
     );
   }
 
@@ -114,21 +128,48 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
     }
 
     if (_posts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No posts yet', style: Theme.of(context).textTheme.headlineSmall),
-            Text('Follow friends or create your first post!'),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _showCreatePostDialog,
-              child: Text('Create Post'),
+      // Friends-scoped feeds are legitimately empty until you add friends
+      // or post something, so nudge toward both.
+      return ListView(
+        // Keep pull-to-refresh working over the empty state.
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+          const Icon(Icons.forum_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Center(
+            child: Text('Your feed is quiet',
+                style: Theme.of(context).textTheme.headlineSmall),
+          ),
+          const SizedBox(height: 8),
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Add friends to see their runs, or share your first post.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _openFriends,
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text('Find friends'),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: _showCreatePostDialog,
+                icon: const Icon(Icons.edit),
+                label: const Text('Create post'),
+              ),
+            ],
+          ),
+        ],
       );
     }
 
@@ -243,20 +284,6 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
     );
   }
 
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: 0,
-      onTap: (index) => _navigateToTab(index),
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Feed'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Friends'),
-        BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Challenges'),
-        BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Leaderboard'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    );
-  }
 
   void _showCreatePostDialog() {
     final TextEditingController controller = TextEditingController();
@@ -475,25 +502,6 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
     }
   }
 
-  void _navigateToTab(int index) {
-    switch (index) {
-      case 0:
-        // Already on feed
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/friends');
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/challenges');
-        break;
-      case 3:
-        Navigator.pushNamed(context, '/leaderboard');
-        break;
-      case 4:
-        Navigator.pushNamed(context, '/profile');
-        break;
-    }
-  }
 
   String _formatTimestamp(String? timestamp) {
     if (timestamp == null) return '';

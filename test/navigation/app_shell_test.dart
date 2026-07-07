@@ -7,6 +7,7 @@ import 'package:trego/metrics/metrics_models.dart';
 import 'package:trego/metrics/metrics_provider.dart';
 import 'package:trego/navigation/app_shell.dart';
 import 'package:trego/notifications/notifications_provider.dart';
+import 'package:trego/social/social_service.dart';
 import 'package:trego/providers/app_state_provider.dart';
 import 'package:trego/providers/feed_provider.dart';
 import 'package:trego/providers/plan_provider.dart';
@@ -84,6 +85,7 @@ Widget _wrap(Widget child, {MetricsProvider? metrics}) =>
           ChangeNotifierProvider<NotificationsProvider>(
             create: (_) => NotificationsProvider(service: StubSocialService()),
           ),
+          Provider<SocialService>(create: (_) => StubSocialService()),
           Provider<PendingSavesFlusher>(
             create: (_) => PendingSavesFlusher(saver: _NoOpRunSaver()),
           ),

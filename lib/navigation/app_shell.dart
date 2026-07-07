@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../metrics/metrics_provider.dart';
 import '../notifications/notifications_provider.dart';
-import '../screens/feed_placeholder_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/plan_placeholder_screen.dart';
 import '../screens/record/record_flow.dart';
 import '../screens/you_screen.dart';
+import '../social/screens/social_feed_screen.dart';
+import '../social/social_service.dart';
 import '../shared/theme/context_tokens.dart';
 import 'tab_config.dart';
 
@@ -19,6 +20,9 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   TregoTab _current = TregoTab.home;
+
+  /// Lets the shell imperatively refresh the (kept-alive) feed on tab select.
+  final GlobalKey<SocialFeedScreenState> _feedKey = GlobalKey();
 
   @override
   void initState() {
@@ -53,6 +57,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       // No-op within the 5-min freshness window; fresh fetch otherwise.
       context.read<MetricsProvider>().refresh();
       context.read<NotificationsProvider>().refreshUnread();
+    } else if (tab == TregoTab.feed) {
+      _feedKey.currentState?.reload();
     }
   }
 
@@ -82,7 +88,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         children: [
           HomeScreen(onSwitchTab: _switchTab),
           const PlanPlaceholderScreen(),
-          const FeedPlaceholderScreen(),
+          SocialFeedScreen(key: _feedKey, service: context.read<SocialService>()),
           const YouScreen(),
         ],
       ),
