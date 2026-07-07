@@ -73,6 +73,18 @@ void main() {
     expect(find.text('Bob B'), findsOneWidget);
   });
 
+  testWidgets('initialTab: 1 opens on the Requests tab', (tester) async {
+    final svc = _FakeSocialService(requests: [_request(id: 'r1', type: 'incoming')]);
+    await tester.pumpWidget(MaterialApp(
+      home: FriendsScreen(service: svc, initialTab: 1),
+    ));
+    await tester.pumpAndSettle();
+
+    // The incoming request's Accept/Decline are only on the Requests tab; if we
+    // land there without tapping, the tab defaulted correctly.
+    expect(find.widgetWithText(ElevatedButton, 'Accept'), findsOneWidget);
+  });
+
   testWidgets('unfriend removes the friend optimistically on success', (tester) async {
     final svc = _FakeSocialService(friends: [_friend(uid: 'bob', name: 'Bob B')]);
     await tester.pumpWidget(wrap(svc));
