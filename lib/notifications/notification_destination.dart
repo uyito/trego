@@ -36,6 +36,7 @@ NotificationDestination notificationDestination(Map<String, dynamic> notificatio
       return const FriendsDestination(0); // Friends tab
     case 'post_like':
     case 'post_comment':
+    case 'mention':
       return (targetId != null && targetId.isNotEmpty)
           ? PostCommentsDestination(targetId)
           : const NoDestination();

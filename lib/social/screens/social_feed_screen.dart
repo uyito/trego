@@ -5,6 +5,7 @@ import '../../widgets/core/trego_app_bar.dart';
 import '../social_service.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/edit_post_dialog.dart';
+import '../widgets/mention_text.dart';
 import '../widgets/report_dialog.dart';
 import 'friends_screen.dart';
 
@@ -206,8 +207,9 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              post['content'] ?? '',
+            child: MentionText(
+              content: post['content'] ?? '',
+              mentions: mentionsOf(post),
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ),

@@ -29,6 +29,12 @@ void main() {
     expect((d as PostCommentsDestination).postId, 'p9');
   });
 
+  test('mention → post comments', () {
+    final d = notificationDestination(_n('mention', targetId: 'p3'));
+    expect(d, isA<PostCommentsDestination>());
+    expect((d as PostCommentsDestination).postId, 'p3');
+  });
+
   test('post event with no targetId → none', () {
     expect(notificationDestination(_n('post_like')), isA<NoDestination>());
     expect(notificationDestination(_n('post_comment', targetId: '')), isA<NoDestination>());
