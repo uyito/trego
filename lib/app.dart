@@ -5,6 +5,7 @@ import 'auth/register_screen.dart';
 import 'metrics/metrics_api_client.dart';
 import 'metrics/metrics_provider.dart';
 import 'notifications/notifications_provider.dart';
+import 'push/push_service.dart';
 import 'social/social_service.dart';
 import 'navigation/app_shell.dart';
 import 'providers/app_state_provider.dart';
@@ -74,6 +75,14 @@ class _TregoAppState extends State<TregoApp> {
               context.read<NotificationsProvider>().clear();
             });
           }
+          // Register/unregister this device for push as auth flips.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (appState.isAuthenticated) {
+              PushService.instance.onLogin();
+            } else {
+              PushService.instance.onLogout();
+            }
+          });
           if (appState.isInitializing) {
             return MaterialApp(
               home: Scaffold(
@@ -95,6 +104,7 @@ class _TregoAppState extends State<TregoApp> {
 
           return MaterialApp(
             title: 'Trego',
+            navigatorKey: PushService.navigatorKey,
             theme: TregoTheme.light(),
             darkTheme: TregoTheme.dark(),
             themeMode: appearance.mode,
