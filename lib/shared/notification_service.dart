@@ -153,15 +153,47 @@ class NotificationService {
     }
   }
 
+  /// Set by [PushService] to route taps on push-originated local notifications
+  /// (which carry {type, targetType, targetId} rather than a legacy `route`).
+  static void Function(Map<String, dynamic> data)? pushTapHandler;
+
   void _handleNotificationNavigation(Map<String, dynamic> data) {
     final route = data['route'] as String?;
-
     if (route != null) {
-      // This would typically use a global navigator or routing service
       if (kDebugMode) {
         debugPrint('🧭 Would navigate to: $route');
       }
+      return;
     }
+    // Push payloads (type/targetType/targetId) route via PushService.
+    if (data['type'] != null) {
+      pushTapHandler?.call(data);
+    }
+  }
+
+  /// Displays a push-originated notification (foreground FCM message). The
+  /// [data] map is stored as the tap payload so a tap can deep-link.
+  Future<void> showPush(String title, String body, Map<String, String> data) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _socialChannel,
+          'Social Notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: jsonEncode(data),
+    );
   }
 
   // Workout Notifications

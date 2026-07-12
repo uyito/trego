@@ -43,6 +43,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Default FCM channel for backgrounded notification messages;
+             matches the 'social_notifications' channel created at runtime. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="social_notifications" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
