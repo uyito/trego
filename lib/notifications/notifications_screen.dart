@@ -125,6 +125,8 @@ class _NotificationTile extends StatelessWidget {
         return Icons.person_add_alt_1;
       case 'friend_accept':
         return Icons.people_alt_outlined;
+      case 'mention':
+        return Icons.alternate_email;
       default:
         return Icons.notifications_none;
     }

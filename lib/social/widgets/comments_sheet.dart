@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../social_service.dart';
+import 'mention_text.dart';
 
 /// Modal bottom sheet showing a post's comments with an input bar to add one.
 ///
@@ -141,7 +142,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
             child: photo == null ? const Icon(Icons.person) : null,
           ),
           title: Text(author?['name'] ?? 'Unknown'),
-          subtitle: Text(c['content'] ?? ''),
+          subtitle: MentionText(
+            content: c['content'] ?? '',
+            mentions: mentionsOf(c),
+          ),
         );
       },
     );
