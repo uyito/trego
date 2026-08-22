@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../achievements/achievements_screen.dart';
-import '../personalization/for_you_hub.dart';
+import '../metrics/metrics_models.dart';
+import '../metrics/metrics_provider.dart';
 import '../providers/app_state_provider.dart';
-import '../recipes/recipe_screen.dart';
 import '../shared/notification_settings_screen.dart';
 import '../shared/theme/context_tokens.dart';
 import '../shared/theme/trego_tokens.dart';
-import '../tdee/tdee_screen.dart';
-import '../tracker/tracker_dashboard_screen.dart';
 import '../widgets/core/trego_app_bar.dart';
 import '../widgets/core/trego_avatar.dart';
 import '../widgets/core/trego_scaffold.dart';
@@ -22,37 +20,40 @@ class YouScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AppStateProvider>();
+    final metrics = context.watch<MetricsProvider>();
     final displayName = (auth.user?['displayName'] as String?)
         ?? (auth.user?['email'] as String?)
         ?? 'You';
+    final username = auth.user?['username'] as String?;
 
     return TregoScaffold(
       appBar: const TregoAppBar(title: 'You'),
       body: ListView(
         children: [
-          _Header(name: displayName),
-          const _SectionLabel(label: 'Profile'),
+          _ProfileHeader(
+            name: displayName,
+            username: username,
+            snapshot: metrics.snapshot,
+          ),
+          const _SectionLabel(label: 'Activity'),
+          _Row(
+            icon: Icons.emoji_events_outlined,
+            title: 'Achievements',
+            onTap: () => _push(context, const AchievementsScreen()),
+          ),
+          const _SectionLabel(label: 'Account'),
           _Row(
             icon: Icons.alternate_email,
-            title: (auth.user?['username'] as String?) != null
-                ? '@${auth.user!['username']}'
-                : 'Set username',
+            title: 'Username',
             onTap: () => _push(
               context,
-              UsernameEditScreen(currentUsername: auth.user?['username'] as String?),
+              UsernameEditScreen(currentUsername: username),
             ),
           ),
-          const _SectionLabel(label: 'Tools'),
-          _Row(icon: Icons.restaurant_menu, title: 'Recipes', onTap: () => _push(context, const RecipeScreen())),
-          _Row(icon: Icons.calculate_outlined, title: 'TDEE Calculator', onTap: () => _push(context, const TdeeScreen())),
-          _Row(icon: Icons.auto_awesome, title: 'For You', onTap: () => _push(context, const ForYouHub())),
-          _Row(icon: Icons.timeline, title: 'Run History', onTap: () => _push(context, const TrackerDashboardScreen())),
-          const _SectionLabel(label: 'Activity'),
-          _Row(icon: Icons.emoji_events_outlined, title: 'Achievements', onTap: () => _push(context, const AchievementsScreen())),
-          const _SectionLabel(label: 'Settings'),
-          _Row(icon: Icons.notifications_none, title: 'Notifications', onTap: () => _push(context, const NotificationSettingsScreen())),
+          const _SectionLabel(label: 'Preferences'),
           _Row(icon: Icons.palette_outlined, title: 'Appearance', onTap: () => _push(context, const AppearanceSettingsScreen())),
           _Row(icon: Icons.directions_run, title: 'Recording', onTap: () => _push(context, const RecordingSettingsScreen())),
+          _Row(icon: Icons.notifications_none, title: 'Notifications', onTap: () => _push(context, const NotificationSettingsScreen())),
           const SizedBox(height: Space.xl),
           _Row(icon: Icons.logout, title: 'Sign out', destructive: true, onTap: () => auth.signOut()),
           const SizedBox(height: Space.xxl),
@@ -66,9 +67,12 @@ class YouScreen extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _ProfileHeader extends StatelessWidget {
   final String name;
-  const _Header({required this.name});
+  final String? username;
+  final MetricsSnapshot? snapshot;
+
+  const _ProfileHeader({required this.name, required this.username, required this.snapshot});
 
   @override
   Widget build(BuildContext context) {
@@ -78,13 +82,67 @@ class _Header extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: tokens.border)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TregoAvatar(name: name, size: TregoAvatarSize.lg),
-          const SizedBox(width: Space.md),
-          Expanded(child: Text(name, style: context.typo.title)),
+          Row(
+            children: [
+              TregoAvatar(name: name, size: TregoAvatarSize.lg),
+              const SizedBox(width: Space.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: context.typo.title),
+                    if (username != null)
+                      Text('@$username', style: context.typo.bodySmall.copyWith(color: tokens.inkMuted)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Space.lg),
+          _StatRow(snapshot: snapshot),
         ],
       ),
+    );
+  }
+}
+
+class _StatRow extends StatelessWidget {
+  final MetricsSnapshot? snapshot;
+  const _StatRow({required this.snapshot});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalRuns = snapshot?.totals.totalRuns;
+    final thisWeekKm = snapshot?.thisWeek.totalKm;
+    final streakDays = snapshot?.thisWeek.streakDays;
+
+    return Row(
+      children: [
+        Expanded(child: _StatTile(label: 'Runs', value: totalRuns?.toString() ?? '—')),
+        Expanded(child: _StatTile(label: 'This Week', value: thisWeekKm != null ? '${thisWeekKm.toStringAsFixed(1)} km' : '—')),
+        Expanded(child: _StatTile(label: 'Streak', value: streakDays != null ? '$streakDays d' : '—')),
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  const _StatTile({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Column(
+      children: [
+        Text(value, style: context.typo.stat),
+        const SizedBox(height: Space.xs),
+        Text(label.toUpperCase(), style: context.typo.label.copyWith(color: tokens.inkMuted)),
+      ],
     );
   }
 }

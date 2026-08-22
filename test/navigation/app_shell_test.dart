@@ -165,12 +165,12 @@ void main() {
     });
   });
 
-  testWidgets('tapping You tab shows Tools row', (tester) async {
+  testWidgets('tapping You tab shows Preferences settings row', (tester) async {
     await _runIgnoringFirebaseErrors(() async {
       await tester.pumpWidget(_wrap(const AppShell()));
       await tester.tap(find.text('You'));
       await tester.pumpAndSettle();
-      expect(find.text('TOOLS'), findsOneWidget);
+      expect(find.text('PREFERENCES'), findsOneWidget);
     });
   });
 
