@@ -11,6 +11,7 @@ import 'package:trego/providers/plan_provider.dart';
 import 'package:trego/screens/home_screen.dart';
 import 'package:trego/screens/progress_screen.dart';
 import 'package:trego/shared/theme/trego_theme.dart';
+import 'package:trego/workouts/workout_hub.dart';
 import 'package:trego/widgets/core/section_head.dart';
 
 import '../helpers/stub_social_service.dart';
@@ -161,8 +162,8 @@ void main() {
 
       // AchievementsScreen itself touches Firebase in initState, so its
       // subtree collapses into an ErrorWidget in this test host; the
-      // swallow above confirms it was in fact reached (only the expected
-      // Firebase error surfaced).
+      // swallow above is a best-effort/weak check that the tap didn't throw
+      // an unexpected error (not a confirmation the screen was reached).
     });
   });
 
@@ -179,6 +180,9 @@ void main() {
       await tester.pumpWidget(_wrap(const HomeScreen()));
       await tester.tap(find.text('Training'));
       await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(WorkoutHub), findsOneWidget);
     });
   });
 }
