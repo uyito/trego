@@ -94,6 +94,36 @@ Widget _wrap(Widget child, {MetricsProvider? metrics}) =>
       ),
     );
 
+/// AppShell's IndexedStack keeps every tab mounted (that's the point of
+/// IndexedStack — state survives tab switches), which means NutritionHub's
+/// Recipes tab (RecipeScreen -> RecipeService -> FirebaseFirestore.instance)
+/// builds eagerly on every AppShell pump, even while Home is selected.
+/// Firebase isn't initialized in this test host, so that build throws the
+/// same expected "No Firebase App" error test/widget_test.dart already
+/// documents and swallows. We do the same here, scoped to each `body`.
+Future<void> _runIgnoringFirebaseErrors(
+  Future<void> Function() body,
+) async {
+  final captured = <Object>[];
+  final previousOnError = FlutterError.onError;
+  FlutterError.onError = (details) => captured.add(details.exception);
+
+  try {
+    await body();
+  } finally {
+    FlutterError.onError = previousOnError;
+  }
+
+  for (final e in captured) {
+    final msg = e.toString();
+    expect(
+      msg.contains('No Firebase App'),
+      isTrue,
+      reason: 'Unexpected exception during app_shell test: $e',
+    );
+  }
+}
+
 void main() {
   initTestEnv();
 
@@ -102,33 +132,54 @@ void main() {
   });
 
   testWidgets('shell starts on Home tab', (tester) async {
-    final api = _FakeMetricsApi()..next = _snapshotWithRuns(totalRuns: 3);
-    final mp = MetricsProvider(client: api);
-    await mp.refresh();
+    await _runIgnoringFirebaseErrors(() async {
+      final api = _FakeMetricsApi()..next = _snapshotWithRuns(totalRuns: 3);
+      final mp = MetricsProvider(client: api);
+      await mp.refresh();
 
-    await tester.pumpWidget(_wrap(const AppShell(), metrics: mp));
-    await tester.pump();
-    expect(find.text('THIS WEEK'), findsOneWidget);
+      await tester.pumpWidget(_wrap(const AppShell(), metrics: mp));
+      await tester.pump();
+      expect(find.text('THIS WEEK'), findsOneWidget);
+    });
   });
 
-  testWidgets('tapping Plan tab shows Plan placeholder', (tester) async {
-    await tester.pumpWidget(_wrap(const AppShell()));
-    await tester.tap(find.text('Plan'));
-    await tester.pumpAndSettle();
-    expect(find.text('Training plans coming soon'), findsOneWidget);
+  testWidgets('bottom nav shows Home, Nutrition, Feed, You (no Plan)', (tester) async {
+    await _runIgnoringFirebaseErrors(() async {
+      await tester.pumpWidget(_wrap(const AppShell()));
+      await tester.pump();
+      expect(find.text('Nutrition'), findsOneWidget);
+      expect(find.text('Plan'), findsNothing);
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.byKey(const Key('shell-record-button')), findsOneWidget);
+    });
   });
 
-  testWidgets('tapping You tab shows Tools row', (tester) async {
-    await tester.pumpWidget(_wrap(const AppShell()));
-    await tester.tap(find.text('You'));
-    await tester.pumpAndSettle();
-    expect(find.text('TOOLS'), findsOneWidget);
+  testWidgets('tapping Nutrition tab shows the Nutrition hub tabs', (tester) async {
+    await _runIgnoringFirebaseErrors(() async {
+      await tester.pumpWidget(_wrap(const AppShell()));
+      await tester.tap(find.text('Nutrition'));
+      await tester.pumpAndSettle();
+      expect(find.text('Recipes'), findsWidgets);
+      expect(find.text('Pantry'), findsWidgets);
+      expect(find.text('TDEE'), findsWidgets);
+    });
+  });
+
+  testWidgets('tapping You tab shows Preferences settings row', (tester) async {
+    await _runIgnoringFirebaseErrors(() async {
+      await tester.pumpWidget(_wrap(const AppShell()));
+      await tester.tap(find.text('You'));
+      await tester.pumpAndSettle();
+      expect(find.text('PREFERENCES'), findsOneWidget);
+    });
   });
 
   testWidgets('tapping center Record button opens modal', (tester) async {
-    await tester.pumpWidget(_wrap(const AppShell()));
-    await tester.tap(find.byKey(const Key('shell-record-button')));
-    await tester.pumpAndSettle();
-    expect(find.text('Ready'), findsOneWidget);
+    await _runIgnoringFirebaseErrors(() async {
+      await tester.pumpWidget(_wrap(const AppShell()));
+      await tester.tap(find.byKey(const Key('shell-record-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Ready'), findsOneWidget);
+    });
   });
 }

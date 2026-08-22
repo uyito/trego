@@ -403,11 +403,12 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   }
 
   void _viewFriendProfile(Map<String, dynamic> friend) {
-    Navigator.pushNamed(
-      context, 
-      '/profile',
-      arguments: {'userId': friend['id']},
-    );
+    // TODO: Navigate to friend profile view once that screen exists.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Friend profiles coming soon!')),
+      );
+    }
   }
 
   void _showUnfriendDialog(Map<String, dynamic> friend) {

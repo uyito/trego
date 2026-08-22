@@ -3,14 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trego/auth/auth_service.dart';
 import 'package:trego/shared/app_theme.dart';
 
-class WeeklySummaryScreen extends StatefulWidget {
-  const WeeklySummaryScreen({super.key});
+class WorkoutWeeklySummaryScreen extends StatefulWidget {
+  const WorkoutWeeklySummaryScreen({super.key});
 
   @override
-  State<WeeklySummaryScreen> createState() => _WeeklySummaryScreenState();
+  State<WorkoutWeeklySummaryScreen> createState() => _WorkoutWeeklySummaryScreenState();
 }
 
-class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
+class _WorkoutWeeklySummaryScreenState extends State<WorkoutWeeklySummaryScreen>
     with TickerProviderStateMixin {
   String? _userId;
   bool _isLoading = true;
