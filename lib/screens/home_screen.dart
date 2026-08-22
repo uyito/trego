@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../achievements/achievements_screen.dart';
 import '../metrics/metrics_provider.dart';
 import '../metrics/widgets/goal_edit_dialog.dart';
 import '../metrics/widgets/goal_progress_card.dart';
@@ -10,6 +11,7 @@ import '../navigation/tab_config.dart';
 import '../notifications/notifications_provider.dart';
 import '../notifications/notifications_screen.dart';
 import '../notifications/widgets/notification_badge.dart';
+import '../personalization/for_you_hub.dart';
 import '../providers/feed_provider.dart';
 import '../providers/plan_provider.dart';
 import '../shared/theme/context_tokens.dart';
@@ -21,10 +23,12 @@ import '../widgets/core/trego_button.dart';
 import '../widgets/core/trego_scaffold.dart';
 import '../widgets/core/workout_hero_card.dart';
 import '../workouts/workout_hub.dart';
+import 'progress_screen.dart';
 
 /// Home tab. Reference application of the design system.
 /// Layout (top → bottom):
-/// AppBar greeting → WorkoutHeroCard → metrics section (live) → friends list.
+/// AppBar greeting → WorkoutHeroCard → quick links (For You / Training) →
+/// metrics section (live) → Achievements preview → friends list.
 class HomeScreen extends StatelessWidget {
   /// Optional callback to switch tabs. Wired by [AppShell].
   final ValueChanged<TregoTab>? onSwitchTab;
@@ -86,7 +90,16 @@ class HomeScreen extends StatelessWidget {
                 },
               ),
             ),
+            const _QuickLinksRow(),
             const _MetricsSection(),
+            SectionHead(
+              label: 'Achievements',
+              trailingLabel: 'See all →',
+              onTrailingTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+              ),
+            ),
+            const _AchievementsPreview(),
             SectionHead(
               label: 'Friends',
               trailingLabel: 'See all →',
@@ -163,7 +176,13 @@ class _MetricsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHead(label: 'This Week'),
+        SectionHead(
+          label: 'This Week',
+          trailingLabel: 'See all →',
+          onTrailingTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ProgressScreen()),
+          ),
+        ),
         WeeklyStatStrip(metrics: snap.thisWeek),
         RecentPrCard(prs: snap.prs, now: DateTime.now()),
         const SizedBox(height: Space.sm),
@@ -227,6 +246,154 @@ class _MetricsSkeleton extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Row of two entry-point cards below the hero: the AI coach ("For You")
+/// and the workout library ("Training").
+class _QuickLinksRow extends StatelessWidget {
+  const _QuickLinksRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Space.md, Space.md, Space.md, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _QuickLinkCard(
+              icon: Icons.auto_awesome,
+              title: 'For You',
+              subtitle: 'AI coaching & insights',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ForYouHub()),
+              ),
+            ),
+          ),
+          const SizedBox(width: Space.sm),
+          Expanded(
+            child: _QuickLinkCard(
+              icon: Icons.fitness_center,
+              title: 'Training',
+              subtitle: 'Plans & exercises',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const WorkoutHub()),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickLinkCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _QuickLinkCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final typo = context.typo;
+    return Material(
+      color: tokens.surface,
+      borderRadius: BorderRadius.circular(Radii.compactCard),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.compactCard),
+        child: Container(
+          padding: const EdgeInsets.all(Space.md),
+          decoration: BoxDecoration(
+            border: Border.all(color: tokens.border),
+            borderRadius: BorderRadius.circular(Radii.compactCard),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: tokens.brand),
+              const SizedBox(height: Space.sm),
+              Text(title, style: typo.titleSmall.copyWith(color: tokens.ink)),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: typo.bodySmall.copyWith(color: tokens.inkMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact horizontal strip of badge teasers; tapping any card (or the
+/// "See all" trailing above it) opens the full [AchievementsScreen].
+class _AchievementsPreview extends StatelessWidget {
+  const _AchievementsPreview();
+
+  static const _badges = [
+    (Icons.local_fire_department, 'Streak'),
+    (Icons.emoji_events, 'First 5K'),
+    (Icons.bolt, 'Fast Pace'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final typo = context.typo;
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: Space.md),
+        itemCount: _badges.length,
+        separatorBuilder: (_, __) => const SizedBox(width: Space.sm),
+        itemBuilder: (context, i) {
+          final (icon, label) = _badges[i];
+          return Material(
+            color: tokens.surface,
+            borderRadius: BorderRadius.circular(Radii.compactCard),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(Radii.compactCard),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+              ),
+              child: Container(
+                width: 84,
+                padding: const EdgeInsets.all(Space.sm),
+                decoration: BoxDecoration(
+                  border: Border.all(color: tokens.border),
+                  borderRadius: BorderRadius.circular(Radii.compactCard),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, color: tokens.brand),
+                    const SizedBox(height: Space.xs),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: typo.bodySmall.copyWith(color: tokens.ink),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
