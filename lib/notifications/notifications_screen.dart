@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../social/screens/friends_screen.dart';
+import '../social/screens/social_hub_screen.dart';
 import '../social/social_service.dart';
 import '../social/widgets/comments_sheet.dart';
 import 'notification_destination.dart';
@@ -51,7 +51,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     switch (destination) {
       case FriendsDestination(:final tab):
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => FriendsScreen(initialTab: tab)),
+          MaterialPageRoute(
+            builder: (_) => SocialHubScreen(
+              initialTab: 1,
+              friendsInitialTab: tab,
+              service: context.read<SocialService>(),
+            ),
+          ),
         );
       case PostCommentsDestination(:final postId):
         CommentsSheet.show(

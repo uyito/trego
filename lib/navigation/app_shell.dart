@@ -7,6 +7,7 @@ import '../screens/home_screen.dart';
 import '../screens/record/record_flow.dart';
 import '../screens/you_screen.dart';
 import '../social/screens/social_feed_screen.dart';
+import '../social/screens/social_hub_screen.dart';
 import '../social/social_service.dart';
 import '../shared/theme/context_tokens.dart';
 import 'tab_config.dart';
@@ -23,6 +24,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   /// Lets the shell imperatively refresh the (kept-alive) feed on tab select.
   final GlobalKey<SocialFeedScreenState> _feedKey = GlobalKey();
+  final GlobalKey<SocialHubScreenState> _socialHubKey = GlobalKey();
 
   @override
   void initState() {
@@ -58,7 +60,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       context.read<MetricsProvider>().refresh();
       context.read<NotificationsProvider>().refreshUnread();
     } else if (tab == TregoTab.feed) {
-      _feedKey.currentState?.reload();
+      _socialHubKey.currentState?.reloadFeed();
     }
   }
 
@@ -88,7 +90,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         children: [
           HomeScreen(onSwitchTab: _switchTab),
           const NutritionHub(),
-          SocialFeedScreen(key: _feedKey, service: context.read<SocialService>()),
+          SocialHubScreen(key: _socialHubKey, service: context.read<SocialService>(), feedKey: _feedKey),
           const YouScreen(),
         ],
       ),
