@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../metrics/metrics_provider.dart';
 import '../notifications/notifications_provider.dart';
+import '../nutrition/nutrition_hub.dart';
 import '../screens/home_screen.dart';
-import '../screens/plan_placeholder_screen.dart';
 import '../screens/record/record_flow.dart';
 import '../screens/you_screen.dart';
 import '../social/screens/social_feed_screen.dart';
@@ -76,7 +76,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final tokens = context.tokens;
     final index = switch (_current) {
       TregoTab.home => 0,
-      TregoTab.plan => 1,
+      TregoTab.nutrition => 1,
       TregoTab.feed => 2,
       TregoTab.you => 3,
     };
@@ -87,7 +87,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         index: index,
         children: [
           HomeScreen(onSwitchTab: _switchTab),
-          const PlanPlaceholderScreen(),
+          const NutritionHub(),
           SocialFeedScreen(key: _feedKey, service: context.read<SocialService>()),
           const YouScreen(),
         ],
@@ -123,7 +123,7 @@ class _BottomNav extends StatelessWidget {
           child: Row(
             children: [
               Expanded(child: _NavItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home, selected: current == TregoTab.home, onTap: () => onSelect(TregoTab.home))),
-              Expanded(child: _NavItem(label: 'Plan', icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today, selected: current == TregoTab.plan, onTap: () => onSelect(TregoTab.plan))),
+              Expanded(child: _NavItem(label: 'Nutrition', icon: Icons.restaurant_menu_outlined, activeIcon: Icons.restaurant_menu, selected: current == TregoTab.nutrition, onTap: () => onSelect(TregoTab.nutrition))),
               _RecordButton(onTap: onRecord),
               Expanded(child: _NavItem(label: 'Feed', icon: Icons.people_outline, activeIcon: Icons.people, selected: current == TregoTab.feed, onTap: () => onSelect(TregoTab.feed))),
               Expanded(child: _NavItem(label: 'You', icon: Icons.person_outline, activeIcon: Icons.person, selected: current == TregoTab.you, onTap: () => onSelect(TregoTab.you))),

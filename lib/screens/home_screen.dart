@@ -20,6 +20,7 @@ import '../widgets/core/trego_app_bar.dart';
 import '../widgets/core/trego_button.dart';
 import '../widgets/core/trego_scaffold.dart';
 import '../widgets/core/workout_hero_card.dart';
+import '../workouts/workout_hub.dart';
 
 /// Home tab. Reference application of the design system.
 /// Layout (top → bottom):
@@ -71,7 +72,9 @@ class HomeScreen extends StatelessWidget {
                 isEmpty: today == null,
                 onStart: () {
                   if (today == null) {
-                    onSwitchTab?.call(TregoTab.plan);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const WorkoutHub()),
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
