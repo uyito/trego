@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../shared/theme/context_tokens.dart';
+import '../../shared/theme/trego_tokens.dart';
 import '../social_service.dart';
 
 class FriendsScreen extends StatefulWidget {
@@ -57,21 +59,47 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Friends'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.person_add),
-            onPressed: _showAddFriendDialog,
+      backgroundColor: tokens.canvas,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56 + 48),
+        child: Material(
+          color: tokens.surfaceSunken,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 56,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Space.lg),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text('Friends', style: context.typo.title),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.person_add, color: tokens.ink),
+                          onPressed: _showAddFriendDialog,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                TabBar(
+                  controller: _tabController,
+                  labelColor: tokens.brand,
+                  unselectedLabelColor: tokens.inkMuted,
+                  indicatorColor: tokens.brand,
+                  tabs: [
+                    Tab(text: 'Friends (${_friends.length})'),
+                    Tab(text: 'Requests (${_friendRequests.length})'),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'Friends (${_friends.length})'),
-            Tab(text: 'Requests (${_friendRequests.length})'),
-          ],
         ),
       ),
       body: TabBarView(
@@ -86,22 +114,27 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
   Widget _buildFriendsTab() {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_friends.isEmpty) {
+      final tokens = context.tokens;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No friends yet', style: Theme.of(context).textTheme.headlineSmall),
-            Text('Send friend requests to connect with others'),
-            SizedBox(height: 24),
+            Icon(Icons.people_outline, size: 64, color: tokens.inkMuted),
+            const SizedBox(height: Space.lg),
+            Text('No friends yet', style: context.typo.title),
+            const SizedBox(height: Space.xs),
+            Text(
+              'Send friend requests to connect with others',
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
+            ),
+            const SizedBox(height: Space.xl),
             ElevatedButton(
               onPressed: _showAddFriendDialog,
-              child: Text('Add Friends'),
+              child: const Text('Add Friends'),
             ),
           ],
         ),
@@ -119,18 +152,23 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
   Widget _buildRequestsTab() {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_friendRequests.isEmpty) {
+      final tokens = context.tokens;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.mail_outline, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No friend requests', style: Theme.of(context).textTheme.headlineSmall),
-            Text('Friend requests will appear here'),
+            Icon(Icons.mail_outline, size: 64, color: tokens.inkMuted),
+            const SizedBox(height: Space.lg),
+            Text('No friend requests', style: context.typo.title),
+            const SizedBox(height: Space.xs),
+            Text(
+              'Friend requests will appear here',
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
+            ),
           ],
         ),
       );
@@ -146,26 +184,35 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   }
 
   Widget _buildFriendTile(Map<String, dynamic> friend) {
+    final tokens = context.tokens;
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      color: tokens.surface,
+      margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.xs),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.standardCard),
+        side: BorderSide(color: tokens.border),
+      ),
       child: ListTile(
         leading: CircleAvatar(
+          backgroundColor: tokens.surfaceSunken,
           backgroundImage: friend['photoURL'] != null
               ? NetworkImage(friend['photoURL'])
               : null,
           child: friend['photoURL'] == null
-              ? Icon(Icons.person)
+              ? Icon(Icons.person, color: tokens.inkMuted)
               : null,
         ),
-        title: Text(friend['name'] ?? 'Unknown'),
+        title: Text(friend['name'] ?? 'Unknown', style: context.typo.titleSmall),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (friend['status'] != null)
-              Text(friend['status'], style: TextStyle(fontSize: 12)),
+              Text(friend['status'], style: context.typo.bodySmall.copyWith(color: tokens.inkMuted)),
             if (friend['mutualFriends'] != null)
-              Text('${friend['mutualFriends']} mutual friends', 
-                   style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                '${friend['mutualFriends']} mutual friends',
+                style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
+              ),
           ],
         ),
         trailing: Row(
@@ -176,18 +223,18 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: Colors.green,
+                  color: tokens.success,
                   shape: BoxShape.circle,
                 ),
               ),
-            SizedBox(width: 8),
+            const SizedBox(width: Space.sm),
             PopupMenuButton<String>(
               onSelected: (value) => _handleFriendAction(value, friend),
               itemBuilder: (context) => [
-                PopupMenuItem(value: 'profile', child: Text('View Profile')),
-                PopupMenuItem(value: 'message', child: Text('Message')),
-                PopupMenuItem(value: 'challenge', child: Text('Challenge')),
-                PopupMenuItem(value: 'unfriend', child: Text('Unfriend')),
+                const PopupMenuItem(value: 'profile', child: Text('View Profile')),
+                const PopupMenuItem(value: 'message', child: Text('Message')),
+                const PopupMenuItem(value: 'challenge', child: Text('Challenge')),
+                const PopupMenuItem(value: 'unfriend', child: Text('Unfriend')),
               ],
             ),
           ],
@@ -199,46 +246,62 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
 
   Widget _buildRequestTile(Map<String, dynamic> request) {
     final bool isIncoming = request['type'] == 'incoming';
-    
+    final tokens = context.tokens;
+
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      color: tokens.surface,
+      margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.xs),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.standardCard),
+        side: BorderSide(color: tokens.border),
+      ),
       child: ListTile(
         leading: CircleAvatar(
+          backgroundColor: tokens.surfaceSunken,
           backgroundImage: request['user']['photoURL'] != null
               ? NetworkImage(request['user']['photoURL'])
               : null,
           child: request['user']['photoURL'] == null
-              ? Icon(Icons.person)
+              ? Icon(Icons.person, color: tokens.inkMuted)
               : null,
         ),
-        title: Text(request['user']['name'] ?? 'Unknown'),
+        title: Text(request['user']['name'] ?? 'Unknown', style: context.typo.titleSmall),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isIncoming ? 'Wants to be friends' : 'Request sent'),
+            Text(
+              isIncoming ? 'Wants to be friends' : 'Request sent',
+              style: context.typo.bodySmall,
+            ),
             if (request['message'] != null)
-              Text('"${request['message']}"', 
-                   style: TextStyle(fontStyle: FontStyle.italic)),
-            Text(_formatTimestamp(request['createdAt']), 
-                 style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
-        trailing: isIncoming ? Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextButton(
-              onPressed: () => _respondToRequest(request['id'], false),
-              child: Text('Decline'),
-            ),
-            ElevatedButton(
-              onPressed: () => _respondToRequest(request['id'], true),
-              child: Text('Accept'),
+              Text(
+                '"${request['message']}"',
+                style: context.typo.bodySmall.copyWith(fontStyle: FontStyle.italic),
+              ),
+            Text(
+              _formatTimestamp(request['createdAt']),
+              style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
             ),
           ],
-        ) : TextButton(
-          onPressed: () => _cancelRequest(request['id']),
-          child: Text('Cancel'),
         ),
+        trailing: isIncoming
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () => _respondToRequest(request['id'], false),
+                    child: const Text('Decline'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _respondToRequest(request['id'], true),
+                    child: const Text('Accept'),
+                  ),
+                ],
+              )
+            : TextButton(
+                onPressed: () => _cancelRequest(request['id']),
+                child: const Text('Cancel'),
+              ),
       ),
     );
   }
@@ -412,23 +475,27 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
   }
 
   void _showUnfriendDialog(Map<String, dynamic> friend) {
+    final tokens = context.tokens;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Unfriend ${friend['name']}?'),
-        content: Text('This person will be removed from your friends list.'),
+        content: const Text('This person will be removed from your friends list.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _unfriend(friend);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Unfriend'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: tokens.danger,
+              foregroundColor: tokens.onDanger,
+            ),
+            child: const Text('Unfriend'),
           ),
         ],
       ),
