@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../shared/theme/context_tokens.dart';
+import '../../shared/theme/trego_tokens.dart';
 import '../../widgets/core/trego_app_bar.dart';
 import '../social_service.dart';
 import '../widgets/comments_sheet.dart';
@@ -129,6 +130,7 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
     }
 
     if (_posts.isEmpty) {
+      final tokens = context.tokens;
       // Friends-scoped feeds are legitimately empty until you add friends
       // or post something, so nudge toward both.
       return ListView(
@@ -136,24 +138,23 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           SizedBox(height: MediaQuery.of(context).size.height * 0.18),
-          const Icon(Icons.forum_outlined, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
+          Icon(Icons.forum_outlined, size: 64, color: tokens.inkMuted),
+          const SizedBox(height: Space.lg),
           Center(
-            child: Text('Your feed is quiet',
-                style: Theme.of(context).textTheme.headlineSmall),
+            child: Text('Your feed is quiet', style: context.typo.title),
           ),
-          const SizedBox(height: 8),
-          const Center(
+          const SizedBox(height: Space.sm),
+          Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: Space.xxl),
               child: Text(
                 'Add friends to see their runs, or share your first post.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: context.typo.body.copyWith(color: tokens.inkMuted),
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -162,7 +163,7 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
                 icon: const Icon(Icons.person_add_alt_1),
                 label: const Text('Find friends'),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Space.md),
               ElevatedButton.icon(
                 onPressed: _showCreatePostDialog,
                 icon: const Icon(Icons.edit),
@@ -187,30 +188,40 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
   }
 
   Widget _buildPostCard(Map<String, dynamic> post) {
+    final tokens = context.tokens;
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: tokens.surface,
+      margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.standardCard),
+        side: BorderSide(color: tokens.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             leading: CircleAvatar(
+              backgroundColor: tokens.surfaceSunken,
               backgroundImage: post['author']['photoURL'] != null
                   ? NetworkImage(post['author']['photoURL'])
                   : null,
               child: post['author']['photoURL'] == null
-                  ? Icon(Icons.person)
+                  ? Icon(Icons.person, color: tokens.inkMuted)
                   : null,
             ),
-            title: Text(post['author']['name'] ?? 'Unknown'),
-            subtitle: Text(_formatTimestamp(post['createdAt'])),
+            title: Text(post['author']['name'] ?? 'Unknown', style: context.typo.titleSmall),
+            subtitle: Text(
+              _formatTimestamp(post['createdAt']),
+              style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
+            ),
             trailing: _buildPostMenu(post),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
             child: MentionText(
               content: post['content'] ?? '',
               mentions: mentionsOf(post),
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: context.typo.body,
             ),
           ),
           if (post['attachments']?.isNotEmpty == true)
@@ -222,6 +233,7 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
   }
 
   Widget _buildPostAttachments(List attachments) {
+    final tokens = context.tokens;
     return SizedBox(
       height: 200,
       child: PageView.builder(
@@ -231,8 +243,10 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
           return Image.network(
             attachment,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => 
-                Container(color: Colors.grey[300], child: const Icon(Icons.error)),
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: tokens.surfaceSunken,
+              child: Icon(Icons.error, color: tokens.inkMuted),
+            ),
           );
         },
       ),
@@ -240,25 +254,26 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
   }
 
   Widget _buildPostActions(Map<String, dynamic> post) {
+    final tokens = context.tokens;
     return Row(
       children: [
         IconButton(
           icon: Icon(
             post['userLiked'] == true ? Icons.favorite : Icons.favorite_border,
-            color: post['userLiked'] == true ? Colors.red : null,
+            color: post['userLiked'] == true ? tokens.danger : tokens.inkMuted,
           ),
           onPressed: () => _toggleLike(post),
         ),
-        Text('${post['likesCount'] ?? 0}'),
-        SizedBox(width: 16),
+        Text('${post['likesCount'] ?? 0}', style: context.typo.bodySmall),
+        const SizedBox(width: Space.lg),
         IconButton(
-          icon: Icon(Icons.comment_outlined),
+          icon: Icon(Icons.comment_outlined, color: tokens.inkMuted),
           onPressed: () => _showCommentsDialog(post),
         ),
-        Text('${post['commentsCount'] ?? 0}'),
-        Spacer(),
+        Text('${post['commentsCount'] ?? 0}', style: context.typo.bodySmall),
+        const Spacer(),
         IconButton(
-          icon: Icon(Icons.share_outlined),
+          icon: Icon(Icons.share_outlined, color: tokens.inkMuted),
           onPressed: () => _sharePost(post),
         ),
       ],
@@ -280,8 +295,8 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
   }
 
   Widget _buildLoadingIndicator() {
-    return Padding(
-      padding: EdgeInsets.all(16),
+    return const Padding(
+      padding: EdgeInsets.all(Space.lg),
       child: Center(child: CircularProgressIndicator()),
     );
   }
@@ -308,7 +323,7 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               DropdownButtonFormField<String>(
                 value: selectedType,
                 decoration: InputDecoration(labelText: 'Post Type'),
@@ -320,7 +335,7 @@ class SocialFeedScreenState extends State<SocialFeedScreen> {
                 ],
                 onChanged: (value) => setState(() => selectedType = value!),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               DropdownButtonFormField<String>(
                 value: selectedVisibility,
                 decoration: InputDecoration(labelText: 'Visibility'),
