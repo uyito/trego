@@ -5,13 +5,12 @@ import '../shared/theme/context_tokens.dart';
 import '../shared/theme/trego_tokens.dart';
 import '../widgets/core/trego_scaffold.dart';
 
-/// Semantic result colors for BMR / TDEE / recommended-calorie cards. These
-/// are distinct decorative hues (not brand/danger/success roles), so they're
-/// centralized here as named consts rather than scattered raw hex.
+/// Semantic result colors for BMR / TDEE cards. These are distinct decorative
+/// hues (not brand/danger/success roles), so they're centralized here as named
+/// consts rather than scattered raw hex. Recommended calories uses tokens.success.
 class _TdeeResultColors {
   static const bmr = Color(0xFFF57C00); // ALLOW-HEX: BMR result accent (orange), no token role fits a decorative per-metric hue
   static const tdee = Color(0xFF1E88E5); // ALLOW-HEX: TDEE result accent (blue), no token role fits a decorative per-metric hue
-  static const recommended = Color(0xFF00A344); // ALLOW-HEX: recommended-calories accent, matches tokens.success light value intentionally kept as const for card use outside ThemeExtension access
   _TdeeResultColors._();
 }
 
@@ -630,7 +629,7 @@ class _TdeeScreenState extends State<TdeeScreen> {
                               const SizedBox(width: Space.sm),
                               Text(
                                 'Calculate TDEE',
-                                style: context.typo.title.copyWith(color: tokens.onBrand),
+                                style: context.typo.titleSmall.copyWith(color: tokens.onBrand),
                               ),
                             ],
                           ),
@@ -656,12 +655,12 @@ class _TdeeScreenState extends State<TdeeScreen> {
                               Container(
                                 padding: const EdgeInsets.all(Space.md),
                                 decoration: BoxDecoration(
-                                  color: _TdeeResultColors.recommended.withValues(alpha: 0.1),
+                                  color: tokens.success.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(Radii.statTile),
                                 ),
                                 child: Icon(
                                   Icons.insights_rounded,
-                                  color: _TdeeResultColors.recommended,
+                                  color: tokens.success,
                                   size: 24,
                                 ),
                               ),
@@ -697,7 +696,7 @@ class _TdeeScreenState extends State<TdeeScreen> {
                             title: 'Recommended Calories',
                             value: '${_suggestedCalories!.toStringAsFixed(0)} kcal',
                             subtitle: 'Based on your goal',
-                            color: _TdeeResultColors.recommended,
+                            color: tokens.success,
                           ),
                           const SizedBox(height: Space.xl),
 
