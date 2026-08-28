@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trego/social/screens/friends_screen.dart';
 import 'package:trego/social/social_service.dart';
 
+import '../helpers/test_app.dart';
+
 /// Fake SocialService: serves fixed friends/requests and records action calls.
 class _FakeSocialService implements SocialService {
   List<Map<String, dynamic>> friends;
@@ -46,6 +48,17 @@ class _FakeSocialService implements SocialService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// Silent SocialService so the base render test doesn't hit the network.
+/// Mirrors test/social/social_feed_screen_test.dart's `_StubSocial` pattern.
+class _StubSocial implements SocialService {
+  @override
+  Future<List<Map<String, dynamic>>> getFriends() async => const [];
+  @override
+  Future<List<Map<String, dynamic>>> getFriendRequests() async => const [];
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 Map<String, dynamic> _friend({String uid = 'bob', String name = 'Bob B'}) =>
     {'id': 'f1', 'uid': uid, 'name': name, 'photoURL': null};
 
@@ -63,7 +76,18 @@ Map<String, dynamic> _request({
     };
 
 void main() {
-  Widget wrap(SocialService service) => MaterialApp(home: FriendsScreen(service: service));
+  initTestEnv();
+
+  Widget wrap(SocialService service) => testApp(FriendsScreen(service: service));
+
+  testWidgets('builds and renders the Friends & Requests tabs', (tester) async {
+    await tester.pumpWidget(testApp(FriendsScreen(service: _StubSocial(), initialTab: 0)));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FriendsScreen), findsOneWidget);
+    expect(find.textContaining('Friends'), findsWidgets);
+    expect(find.textContaining('Requests'), findsWidgets);
+  });
 
   testWidgets('renders friends in the Friends tab', (tester) async {
     final svc = _FakeSocialService(friends: [_friend(name: 'Bob B')]);
@@ -75,8 +99,8 @@ void main() {
 
   testWidgets('initialTab: 1 opens on the Requests tab', (tester) async {
     final svc = _FakeSocialService(requests: [_request(id: 'r1', type: 'incoming')]);
-    await tester.pumpWidget(MaterialApp(
-      home: FriendsScreen(service: svc, initialTab: 1),
+    await tester.pumpWidget(testApp(
+      FriendsScreen(service: svc, initialTab: 1),
     ));
     await tester.pumpAndSettle();
 
