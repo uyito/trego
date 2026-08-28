@@ -11,6 +11,9 @@
 set -eu
 
 FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
+  lib/auth/login_screen.dart \
+  lib/auth/register_screen.dart \
+  lib/auth/social_sign_in_buttons.dart \
   lib/nutrition \
   lib/metrics/widgets \
   lib/tracker/session_controller.dart \
