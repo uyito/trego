@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:trego/auth/auth_service.dart';
 import 'package:trego/auth/register_screen.dart';
 import 'package:trego/auth/social_sign_in_buttons.dart';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
+import '../widgets/core/trego_button.dart';
+import '../widgets/core/trego_scaffold.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,237 +18,230 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
+  // Lazily constructed: touches Firebase on first access, which must not
+  // happen synchronously during State construction (it would crash build()
+  // before a frame is ever produced, including in test hosts where Firebase
+  // isn't initialized). See also _buildSocialSignIn below.
+  late final AuthService _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              Theme.of(context).colorScheme.secondary.withValues(alpha: 0.05),
-              Colors.white,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  // Logo and Brand
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.fitness_center_rounded,
-                      size: 60,
-                      color: Theme.of(context).colorScheme.primary,
+    final tokens = context.tokens;
+    return TregoScaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(Space.xl),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: Space.xxxl),
+                // Logo and Brand
+                Container(
+                  padding: const EdgeInsets.all(Space.xl),
+                  decoration: BoxDecoration(
+                    color: tokens.surface,
+                    borderRadius: BorderRadius.circular(Radii.screenWrapper),
+                    border: Border.all(color: tokens.border),
+                  ),
+                  child: Icon(
+                    Icons.fitness_center_rounded,
+                    size: 60,
+                    color: tokens.brand,
+                  ),
+                ),
+                const SizedBox(height: Space.xxl),
+                Text(
+                  'Welcome Back',
+                  style: context.typo.display,
+                ),
+                const SizedBox(height: Space.sm),
+                Text(
+                  'Sign in to continue your fitness journey',
+                  style: context.typo.body.copyWith(color: tokens.inkMuted),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: Space.xxl),
+
+                // Email Field
+                TextFormField(
+                  controller: _emailController,
+                  style: context.typo.body,
+                  decoration: _inputDecoration(
+                    context,
+                    label: 'Email',
+                    hint: 'Enter your email',
+                    icon: Icons.email_outlined,
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: Space.lg),
+
+                // Password Field
+                TextFormField(
+                  controller: _passwordController,
+                  style: context.typo.body,
+                  decoration: _inputDecoration(
+                    context,
+                    label: 'Password',
+                    hint: 'Enter your password',
+                    icon: Icons.lock_outlined,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        color: tokens.inkMuted,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sign in to continue your fitness journey',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFF6B7280),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  // Email Field
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(
-                        Icons.email_outlined,
-                        color: Theme.of(context).colorScheme.primary,
+                  obscureText: _obscurePassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: Space.xxl),
+
+                // Login Button
+                TregoButton(
+                  label: 'Sign In',
+                  fullWidth: true,
+                  size: TregoButtonSize.lg,
+                  loading: _isLoading,
+                  onPressed: _isLoading ? null : _handleLogin,
+                ),
+                const SizedBox(height: Space.xl),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: tokens.border)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: Space.lg),
+                      child: Text(
+                        'or continue with',
+                        style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
                       ),
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Password Field
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
-                      prefixIcon: Icon(
-                        Icons.lock_outlined,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
+                    Expanded(child: Divider(color: tokens.border)),
+                  ],
+                ),
+                const SizedBox(height: Space.xl),
+
+                // Social Sign-In Buttons
+                _buildSocialSignIn(context),
+
+                const SizedBox(height: Space.xxl),
+
+                // Register Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Don\'t have an account? ',
+                      style: context.typo.body.copyWith(color: tokens.inkMuted),
                     ),
-                    obscureText: _obscurePassword,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Login Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 3,
-                        shadowColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text(
-                              'Sign In',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Divider
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: Colors.grey[300])),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or continue with',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
                           ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: tokens.brand,
+                      ),
+                      child: Text(
+                        'Sign Up',
+                        style: context.typo.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: tokens.brand,
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey[300])),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Social Sign-In Buttons
-                  SocialSignInButtons(
-                    authService: _authService,
-                    onSuccess: () {
-                      // AppStateProvider flips to isAuthenticated=true after
-                      // AuthService.signIn completes; TregoApp's Consumer2
-                      // then swaps in AppShell. Just pop the auth route.
-                      Navigator.pop(context);
-                    },
-                    isLoading: _isLoading,
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Register Link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Don\'t have an account? ',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.primary,
-                        ),
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Space.lg),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  InputDecoration _inputDecoration(
+    BuildContext context, {
+    required String label,
+    required String hint,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    final tokens = context.tokens;
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.button),
+          borderSide: BorderSide(color: color),
+        );
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      labelStyle: context.typo.body.copyWith(color: tokens.inkMuted),
+      hintStyle: context.typo.body.copyWith(color: tokens.inkFaint),
+      prefixIcon: Icon(icon, color: tokens.inkMuted),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: tokens.surface,
+      border: border(tokens.border),
+      enabledBorder: border(tokens.border),
+      focusedBorder: border(tokens.brand),
+      errorBorder: border(tokens.danger),
+      focusedErrorBorder: border(tokens.danger),
+      errorStyle: context.typo.bodySmall.copyWith(color: tokens.danger),
+    );
+  }
+
+  Widget _buildSocialSignIn(BuildContext context) {
+    // AuthService() touches FirebaseAuth.instance on first access; guard so
+    // the screen still renders in Firebase-less test hosts. In production
+    // Firebase is always initialized before this screen mounts, so this
+    // catch never triggers there.
+    try {
+      return SocialSignInButtons(
+        authService: _authService,
+        onSuccess: () {
+          // AppStateProvider flips to isAuthenticated=true after
+          // AuthService.signIn completes; TregoApp's Consumer2
+          // then swaps in AppShell. Just pop the auth route.
+          Navigator.pop(context);
+        },
+        isLoading: _isLoading,
+      );
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -259,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      
+
       // Auth state change will automatically trigger navigation via AppStateProvider
       if (mounted) {
         Navigator.pop(context);
@@ -267,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         String errorMessage = 'Login failed';
-        
+
         if (e.toString().contains('user-not-found')) {
           errorMessage = 'No user found with this email';
         } else if (e.toString().contains('wrong-password')) {
@@ -279,11 +276,15 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (e.toString().contains('too-many-requests')) {
           errorMessage = 'Too many failed attempts. Please try again later';
         }
-        
+
+        final tokens = context.tokens;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: tokens.onDanger),
+            ),
+            backgroundColor: tokens.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -303,4 +304,4 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-} 
+}
