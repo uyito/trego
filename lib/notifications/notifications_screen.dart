@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
 import '../social/screens/social_hub_screen.dart';
 import '../social/social_service.dart';
 import '../social/widgets/comments_sheet.dart';
@@ -24,15 +26,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final provider = context.watch<NotificationsProvider>();
     return Scaffold(
+      backgroundColor: tokens.canvas,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        backgroundColor: tokens.surfaceSunken,
+        foregroundColor: tokens.ink,
+        title: Text('Notifications', style: context.typo.title),
         actions: [
           if (provider.hasUnread)
             TextButton(
               onPressed: () => provider.markAllRead(),
-              child: const Text('Mark all read'),
+              child: Text('Mark all read', style: context.typo.button.copyWith(color: tokens.brand)),
             ),
         ],
       ),
@@ -71,6 +77,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildBody(NotificationsProvider provider) {
+    final tokens = context.tokens;
     if (provider.items.isEmpty && provider.loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -78,18 +85,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return ListView(
         children: [
           SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-          const Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
+          Icon(Icons.notifications_none, size: 64, color: tokens.inkMuted),
+          const SizedBox(height: Space.lg),
           Center(
-            child: Text('No notifications yet',
-                style: Theme.of(context).textTheme.titleMedium),
+            child: Text('No notifications yet', style: context.typo.title),
           ),
-          const SizedBox(height: 8),
-          const Center(
+          const SizedBox(height: Space.sm),
+          Center(
             child: Text(
               'Likes, comments, and friend requests will show up here.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
             ),
           ),
         ],
@@ -97,7 +103,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
     return ListView.separated(
       itemCount: provider.items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, __) => Divider(height: 1, color: tokens.border),
       itemBuilder: (context, index) {
         final n = provider.items[index];
         return _NotificationTile(
@@ -140,6 +146,7 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final unread = notification['read'] != true;
     final author = notification['actor'] as Map<String, dynamic>?;
     final photo = author?['photoURL'] as String?;
@@ -149,49 +156,53 @@ class _NotificationTile extends StatelessWidget {
       direction: DismissDirection.endToStart,
       onDismissed: (_) => onDelete(),
       background: Container(
-        color: Colors.red,
+        color: tokens.danger,
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
+        padding: const EdgeInsets.only(right: Space.xl),
+        child: Icon(Icons.delete, color: tokens.onDanger),
       ),
-      child: Container(
-        color: unread ? const Color(0xFFF0F7FF) : null,
-        child: ListTile(
-          leading: Stack(
-            children: [
-              CircleAvatar(
-                backgroundImage: photo != null ? NetworkImage(photo) : null,
-                child: photo == null ? const Icon(Icons.person) : null,
+      child: ListTile(
+        // Background is set via tileColor (not a wrapping ColoredBox) so
+        // ListTile's ink splashes still paint on its own Material ancestor.
+        tileColor: unread ? tokens.brand.withValues(alpha: 0.08) : null,
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              backgroundImage: photo != null ? NetworkImage(photo) : null,
+              child: photo == null ? Icon(Icons.person, color: tokens.inkMuted) : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: CircleAvatar(
+                radius: 9,
+                backgroundColor: tokens.surface,
+                child: Icon(_iconFor(notification['type'] as String?), size: 12, color: tokens.brand),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: CircleAvatar(
-                  radius: 9,
-                  backgroundColor: Colors.white,
-                  child: Icon(_iconFor(notification['type'] as String?),
-                      size: 12, color: Theme.of(context).colorScheme.primary),
-                ),
-              ),
-            ],
-          ),
-          title: Text(
-            notification['message'] as String? ?? '',
-            style: TextStyle(fontWeight: unread ? FontWeight.w600 : FontWeight.w400),
-          ),
-          subtitle: Text(_formatTimestamp(notification['createdAt'] as String?)),
-          trailing: unread
-              ? Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE31E24),
-                    shape: BoxShape.circle,
-                  ),
-                )
-              : null,
-          onTap: onTap,
+            ),
+          ],
         ),
+        title: Text(
+          notification['message'] as String? ?? '',
+          style: context.typo.body.copyWith(
+            fontWeight: unread ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+        subtitle: Text(
+          _formatTimestamp(notification['createdAt'] as String?),
+          style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
+        ),
+        trailing: unread
+            ? Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: tokens.brand,
+                  shape: BoxShape.circle,
+                ),
+              )
+            : null,
+        onTap: onTap,
       ),
     );
   }
