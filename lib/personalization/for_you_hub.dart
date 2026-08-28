@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../achievements/achievements_screen.dart';
 import 'screens/enhanced_recommendations_screen.dart';
 import '../analytics/advanced_analytics_dashboard.dart';
+import '../shared/theme/context_tokens.dart';
 
 class ForYouHub extends StatefulWidget {
   const ForYouHub({super.key});
@@ -27,16 +28,18 @@ class _ForYouHubState extends State<ForYouHub> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Scaffold(
+      backgroundColor: tokens.canvas,
       appBar: AppBar(
         title: const Text('For You'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: tokens.brand,
+        foregroundColor: tokens.onBrand,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          indicatorColor: tokens.onBrand,
+          labelColor: tokens.onBrand,
+          unselectedLabelColor: tokens.onBrand.withValues(alpha: 0.7),
           tabs: const [
             Tab(
               icon: Icon(Icons.auto_awesome),

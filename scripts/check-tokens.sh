@@ -27,7 +27,9 @@ FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
   lib/tdee/tdee_screen.dart \
   lib/achievements/achievements_screen.dart \
   lib/analytics/advanced_analytics_dashboard.dart \
-  lib/tracker/tracker_dashboard_screen.dart"
+  lib/tracker/tracker_dashboard_screen.dart \
+  lib/personalization/for_you_hub.dart \
+  lib/personalization/screens/enhanced_recommendations_screen.dart"
 
 # Raw hex scan — ignore the tokens file itself (where the palette is defined)
 # and any line bearing an ALLOW-HEX marker.
