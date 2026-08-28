@@ -2,6 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../shared/ai_coach_service.dart';
 import '../personalization_service.dart';
+import '../../shared/theme/context_tokens.dart';
+import '../../shared/theme/trego_tokens.dart';
+
+/// Category accent colors for recommendation items (fitness/nutrition/
+/// recovery/lifestyle/default). No token role exists for these — they're a
+/// fixed palette independent of light/dark surface tokens, so they're
+/// centralized here as the single source rather than scattered per-use.
+class _CategoryAccents {
+  static const fitness = Color(0xFF2196F3); // ALLOW-HEX: category accent, no token role
+  static const nutrition = Color(0xFF4CAF50); // ALLOW-HEX: category accent, no token role
+  static const recovery = Color(0xFF9C27B0); // ALLOW-HEX: category accent, no token role
+  static const lifestyle = Color(0xFFFF9800); // ALLOW-HEX: category accent, no token role
+  static const fallback = Color(0xFFFFEB3B); // ALLOW-HEX: category accent, no token role
+  _CategoryAccents._();
+}
 
 class EnhancedRecommendationsScreen extends StatefulWidget {
   const EnhancedRecommendationsScreen({super.key});
@@ -81,33 +96,42 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
   }
 
   void _showErrorSnackBar(String message) {
+    final tokens = context.tokens;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: tokens.danger),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final user = FirebaseAuth.instance.currentUser;
-    
+
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view recommendations')),
+      return Scaffold(
+        backgroundColor: tokens.canvas,
+        body: Center(
+          child: Text(
+            'Please sign in to view recommendations',
+            style: context.typo.body,
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: tokens.canvas,
       body: Column(
         children: [
           // Header with filters
           Container(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(Space.lg),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              color: tokens.surface,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(Radii.standardCard)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: tokens.ink.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -121,20 +145,18 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
                   children: [
                     Text(
                       'AI Recommendations',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.typo.title.copyWith(color: tokens.ink),
                     ),
                     RotationTransition(
                       turns: _refreshController,
                       child: IconButton(
-                        icon: const Icon(Icons.refresh),
+                        icon: Icon(Icons.refresh, color: tokens.ink),
                         onPressed: _refreshRecommendations,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Space.md),
                 Row(
                   children: [
                     Expanded(
@@ -145,7 +167,7 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
                         (value) => setState(() => _selectedCategory = value!),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Space.md),
                     Expanded(
                       child: _buildFilterDropdown(
                         'Period',
@@ -159,13 +181,13 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
               ],
             ),
           ),
-          
+
           // Tab Bar
           TabBar(
             controller: _tabController,
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Theme.of(context).colorScheme.primary,
+            labelColor: tokens.brand,
+            unselectedLabelColor: tokens.inkMuted,
+            indicatorColor: tokens.brand,
             tabs: const [
               Tab(icon: Icon(Icons.auto_awesome), text: 'AI Coach'),
               Tab(icon: Icon(Icons.fitness_center), text: 'Workouts'),
@@ -173,11 +195,11 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
               Tab(icon: Icon(Icons.insights), text: 'Insights'),
             ],
           ),
-          
+
           // Tab Views
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(color: tokens.brand))
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -199,24 +221,28 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
     List<String> options,
     ValueChanged<String?> onChanged,
   ) {
+    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 4),
+        Text(label, style: context.typo.body.copyWith(fontWeight: FontWeight.w500, color: tokens.ink)),
+        const SizedBox(height: Space.xs),
         DropdownButtonFormField<String>(
           value: value,
           items: options.map((option) => DropdownMenuItem(
             value: option,
-            child: Text(option.toUpperCase()),
+            child: Text(option.toUpperCase(), style: context.typo.body.copyWith(color: tokens.ink)),
           )).toList(),
           onChanged: (newValue) {
             onChanged(newValue);
             _loadAllRecommendations();
           },
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: Space.md, vertical: Space.sm),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(Radii.button),
+              borderSide: BorderSide(color: tokens.border),
+            ),
           ),
         ),
       ],
@@ -225,7 +251,13 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
 
   Widget _buildAICoachTab() {
     if (_aiRecommendations == null && _progressAnalysis == null) {
-      return const Center(child: Text('No AI recommendations available'));
+      final tokens = context.tokens;
+      return Center(
+        child: Text(
+          'No AI recommendations available',
+          style: context.typo.body.copyWith(color: tokens.inkMuted),
+        ),
+      );
     }
 
     return SingleChildScrollView(
@@ -245,40 +277,38 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
 
   Widget _buildProgressAnalysisCard() {
     final analysis = _progressAnalysis!;
-    
+    final tokens = context.tokens;
+
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.analytics, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
+                Icon(Icons.analytics, color: tokens.brand),
+                const SizedBox(width: Space.sm),
                 Text(
                   'Progress Analysis',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: context.typo.titleSmall.copyWith(color: tokens.ink),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             if (analysis['summary'] != null)
               Text(
                 analysis['summary'],
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: context.typo.body.copyWith(color: tokens.ink),
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             if (analysis['metrics'] != null) ...[
               Text(
                 'Key Metrics',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.typo.body.copyWith(fontWeight: FontWeight.w600, color: tokens.ink),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               ...((analysis['metrics'] as List).map((metric) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2.0),
                 child: Row(
@@ -287,12 +317,17 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: tokens.brand,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('${metric['name']}: ${metric['value']} ${metric['unit'] ?? ''}')),
+                    const SizedBox(width: Space.sm),
+                    Expanded(
+                      child: Text(
+                        '${metric['name']}: ${metric['value']} ${metric['unit'] ?? ''}',
+                        style: context.typo.body.copyWith(color: tokens.ink),
+                      ),
+                    ),
                   ],
                 ),
               ))),
@@ -305,26 +340,26 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
 
   Widget _buildAIRecommendationsCard() {
     final recommendations = _aiRecommendations!;
-    
+    final tokens = context.tokens;
+
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.psychology, color: Theme.of(context).colorScheme.secondary),
-                const SizedBox(width: 8),
+                Icon(Icons.psychology, color: tokens.brand),
+                const SizedBox(width: Space.sm),
                 Text(
                   'AI Coach Recommendations',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: context.typo.titleSmall.copyWith(color: tokens.ink),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             if (recommendations['recommendations'] != null)
               ...((recommendations['recommendations'] as List).map((rec) => _buildRecommendationItem(rec))),
           ],
@@ -334,12 +369,13 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
   }
 
   Widget _buildRecommendationItem(Map<String, dynamic> recommendation) {
+    final tokens = context.tokens;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: Space.md),
+      padding: const EdgeInsets.all(Space.md),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        color: tokens.surfaceSunken,
+        borderRadius: BorderRadius.circular(Radii.button),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,26 +383,36 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
           Row(
             children: [
               _getRecommendationIcon(recommendation['category']),
-              const SizedBox(width: 8),
+              const SizedBox(width: Space.sm),
               Expanded(
                 child: Text(
                   recommendation['title'] ?? 'Recommendation',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: context.typo.body.copyWith(fontWeight: FontWeight.w600, color: tokens.ink),
                 ),
               ),
               if (recommendation['priority'] != null)
                 Chip(
-                  label: Text(recommendation['priority']),
+                  label: Text(
+                    recommendation['priority'],
+                    style: context.typo.bodySmall.copyWith(color: tokens.ink),
+                  ),
                   backgroundColor: _getPriorityColor(recommendation['priority']),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(recommendation['description'] ?? ''),
+          const SizedBox(height: Space.sm),
+          Text(
+            recommendation['description'] ?? '',
+            style: context.typo.body.copyWith(color: tokens.inkMuted),
+          ),
           if (recommendation['action'] != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             ElevatedButton(
               onPressed: () => _handleRecommendationAction(recommendation),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: tokens.brand,
+                foregroundColor: tokens.onBrand,
+              ),
               child: Text(recommendation['action']),
             ),
           ],
@@ -377,20 +423,21 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
 
   Widget _getRecommendationIcon(String? category) {
     switch (category) {
-      case 'fitness': return const Icon(Icons.fitness_center, color: Colors.blue);
-      case 'nutrition': return const Icon(Icons.restaurant, color: Colors.green);
-      case 'recovery': return const Icon(Icons.bed, color: Colors.purple);
-      case 'lifestyle': return const Icon(Icons.psychology, color: Colors.orange);
-      default: return const Icon(Icons.lightbulb, color: Colors.yellow);
+      case 'fitness': return const Icon(Icons.fitness_center, color: _CategoryAccents.fitness);
+      case 'nutrition': return const Icon(Icons.restaurant, color: _CategoryAccents.nutrition);
+      case 'recovery': return const Icon(Icons.bed, color: _CategoryAccents.recovery);
+      case 'lifestyle': return const Icon(Icons.psychology, color: _CategoryAccents.lifestyle);
+      default: return const Icon(Icons.lightbulb, color: _CategoryAccents.fallback);
     }
   }
 
   Color _getPriorityColor(String priority) {
+    final tokens = context.tokens;
     switch (priority.toLowerCase()) {
-      case 'high': return Colors.red.withValues(alpha: 0.2);
-      case 'medium': return Colors.orange.withValues(alpha: 0.2);
-      case 'low': return Colors.green.withValues(alpha: 0.2);
-      default: return Colors.grey.withValues(alpha: 0.2);
+      case 'high': return tokens.danger.withValues(alpha: 0.2);
+      case 'medium': return _CategoryAccents.lifestyle.withValues(alpha: 0.2);
+      case 'low': return tokens.success.withValues(alpha: 0.2);
+      default: return tokens.inkMuted.withValues(alpha: 0.2);
     }
   }
 
@@ -402,18 +449,23 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
   }
 
   Widget _buildWorkoutsTab() {
+    final tokens = context.tokens;
     return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       itemCount: _workoutRecommendations.length,
       itemBuilder: (context, index) {
         final workout = _workoutRecommendations[index];
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
+          color: tokens.surface,
+          margin: const EdgeInsets.only(bottom: Space.md),
           child: ListTile(
-            leading: const Icon(Icons.fitness_center, color: Colors.blue),
-            title: Text(workout['name'] ?? 'Workout'),
-            subtitle: Text('${workout['duration'] ?? 0} min • ${workout['difficulty'] ?? 'Medium'}'),
-            trailing: const Icon(Icons.arrow_forward_ios),
+            leading: const Icon(Icons.fitness_center, color: _CategoryAccents.fitness),
+            title: Text(workout['name'] ?? 'Workout', style: context.typo.body.copyWith(color: tokens.ink)),
+            subtitle: Text(
+              '${workout['duration'] ?? 0} min • ${workout['difficulty'] ?? 'Medium'}',
+              style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
+            ),
+            trailing: Icon(Icons.arrow_forward_ios, color: tokens.inkMuted),
             onTap: () => _handleWorkoutTap(workout),
           ),
         );
@@ -422,18 +474,23 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
   }
 
   Widget _buildNutritionTab() {
+    final tokens = context.tokens;
     return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       itemCount: _nutritionRecommendations.length,
       itemBuilder: (context, index) {
         final meal = _nutritionRecommendations[index];
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
+          color: tokens.surface,
+          margin: const EdgeInsets.only(bottom: Space.md),
           child: ListTile(
-            leading: const Icon(Icons.restaurant, color: Colors.green),
-            title: Text(meal['name'] ?? 'Meal'),
-            subtitle: Text('${meal['calories'] ?? 0} kcal • ${meal['prepTime'] ?? 0} min'),
-            trailing: const Icon(Icons.arrow_forward_ios),
+            leading: const Icon(Icons.restaurant, color: _CategoryAccents.nutrition),
+            title: Text(meal['name'] ?? 'Meal', style: context.typo.body.copyWith(color: tokens.ink)),
+            subtitle: Text(
+              '${meal['calories'] ?? 0} kcal • ${meal['prepTime'] ?? 0} min',
+              style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
+            ),
+            trailing: Icon(Icons.arrow_forward_ios, color: tokens.inkMuted),
             onTap: () => _handleMealTap(meal),
           ),
         );
@@ -442,29 +499,29 @@ class _EnhancedRecommendationsScreenState extends State<EnhancedRecommendationsS
   }
 
   Widget _buildInsightsTab() {
+    final tokens = context.tokens;
     if (_insights == null) {
-      return const Center(child: Text('No insights available'));
+      return Center(child: Text('No insights available', style: context.typo.body.copyWith(color: tokens.inkMuted)));
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       child: Column(
         children: [
           if (_insights!['summary'] != null) ...[
             Card(
+              color: tokens.surface,
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(Space.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Personal Insights',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.typo.titleSmall.copyWith(color: tokens.ink),
                     ),
-                    const SizedBox(height: 8),
-                    Text(_insights!['summary']),
+                    const SizedBox(height: Space.sm),
+                    Text(_insights!['summary'], style: context.typo.body.copyWith(color: tokens.ink)),
                   ],
                 ),
               ),

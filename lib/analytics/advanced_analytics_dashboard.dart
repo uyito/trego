@@ -2,6 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
+
+/// Decorative accent colors for KPI stat-card icons and multi-series charts
+/// (workout type distribution, macronutrient bars). These are category
+/// accents with no matching semantic token role — centralized here and
+/// reused so raw hex isn't scattered per chart/card.
+const List<Color> _chartPalette = [
+  Color(0xFF2196F3), // ALLOW-HEX: chart palette 0 (blue) — category accent, no token role fits
+  Color(0xFFFF9800), // ALLOW-HEX: chart palette 1 (orange) — category accent, no token role fits
+  Color(0xFF9C27B0), // ALLOW-HEX: chart palette 2 (purple) — category accent, no token role fits
+  Color(0xFFF44336), // ALLOW-HEX: chart palette 3 (red) — category accent, no token role fits
+  Color(0xFFFFC107), // ALLOW-HEX: chart palette 4 (amber) — category accent, no token role fits
+];
+
+/// Decorative "streak fire" gradient for the current-streak card. A
+/// distinct warm hue from the brand palette (fire/streak motif, not a
+/// brand surface) — no matching semantic token role.
+class _StreakColors {
+  static const fireStart = Color(0xFFFFA726); // ALLOW-HEX: streak fire gradient start (orange 400), decorative motif
+  static const fireEnd = Color(0xFFE64A19); // ALLOW-HEX: streak fire gradient end (deep orange 600), decorative motif
+  _StreakColors._();
+}
 
 class AdvancedAnalyticsDashboard extends StatefulWidget {
   const AdvancedAnalyticsDashboard({super.key});
@@ -44,10 +67,21 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
     super.dispose();
   }
 
+  /// [FirebaseAuth.instance] throws if Firebase hasn't been initialized in
+  /// the current context (e.g. widget test hosts). Treat that the same as
+  /// a signed-out user rather than crashing the build.
+  User? _safeCurrentUser() {
+    try {
+      return FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _loadAnalytics() async {
     setState(() => _isLoading = true);
-    
-    final user = FirebaseAuth.instance.currentUser;
+
+    final user = _safeCurrentUser();
     if (user == null) return;
 
     try {
@@ -184,23 +218,31 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    
+    final tokens = context.tokens;
+    final user = _safeCurrentUser();
+
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to view analytics')),
+      return Scaffold(
+        backgroundColor: tokens.canvas,
+        body: Center(
+          child: Text(
+            'Please sign in to view analytics',
+            style: context.typo.body,
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: tokens.canvas,
       body: Column(
         children: [
           // Header with period selector
           Container(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(Space.lg),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              color: tokens.surface,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(Radii.standardCard)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
@@ -216,12 +258,12 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
                   children: [
                     Text(
                       'Analytics Dashboard',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.typo.title,
                     ),
                     DropdownButton<String>(
                       value: _selectedPeriod,
+                      dropdownColor: tokens.surface,
+                      style: context.typo.body,
                       items: _periods.map((period) => DropdownMenuItem(
                         value: period,
                         child: Text(period.toUpperCase()),
@@ -236,13 +278,13 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
               ],
             ),
           ),
-          
+
           // Tab Bar
           TabBar(
             controller: _tabController,
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Theme.of(context).colorScheme.primary,
+            labelColor: tokens.brand,
+            unselectedLabelColor: tokens.inkMuted,
+            indicatorColor: tokens.brand,
             tabs: const [
               Tab(icon: Icon(Icons.fitness_center), text: 'Workouts'),
               Tab(icon: Icon(Icons.restaurant), text: 'Nutrition'),
@@ -250,11 +292,11 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
               Tab(icon: Icon(Icons.local_fire_department), text: 'Streaks'),
             ],
           ),
-          
+
           // Tab Views
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(color: tokens.brand))
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -272,32 +314,32 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
 
   Widget _buildWorkoutAnalyticsTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       child: Column(
         children: [
           // Summary Cards
           Row(
             children: [
-              Expanded(child: _buildStatCard('Total Workouts', '${_workoutAnalytics['totalWorkouts'] ?? 0}', Icons.fitness_center, Colors.blue)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('Total Duration', '${_workoutAnalytics['totalDuration'] ?? 0}m', Icons.timer, Colors.green)),
+              Expanded(child: _buildStatCard('Total Workouts', '${_workoutAnalytics['totalWorkouts'] ?? 0}', Icons.fitness_center, _chartPalette[0])),
+              const SizedBox(width: Space.md),
+              Expanded(child: _buildStatCard('Total Duration', '${_workoutAnalytics['totalDuration'] ?? 0}m', Icons.timer, context.tokens.success)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           Row(
             children: [
-              Expanded(child: _buildStatCard('Avg Duration', '${_workoutAnalytics['averageDuration'] ?? 0}m', Icons.analytics, Colors.orange)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('Per Week', '${(_workoutAnalytics['workoutsPerWeek'] ?? 0).toStringAsFixed(1)}', Icons.calendar_today, Colors.purple)),
+              Expanded(child: _buildStatCard('Avg Duration', '${_workoutAnalytics['averageDuration'] ?? 0}m', Icons.analytics, _chartPalette[1])),
+              const SizedBox(width: Space.md),
+              Expanded(child: _buildStatCard('Per Week', '${(_workoutAnalytics['workoutsPerWeek'] ?? 0).toStringAsFixed(1)}', Icons.calendar_today, _chartPalette[2])),
             ],
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Workout Types Chart
           _buildWorkoutTypesChart(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Weekly Trend
           _buildWeeklyTrendChart(),
@@ -308,24 +350,24 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
 
   Widget _buildNutritionAnalyticsTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       child: Column(
         children: [
           // Nutrition Summary
           Row(
             children: [
-              Expanded(child: _buildStatCard('Avg Calories', '${_nutritionAnalytics['averageCalories']}', Icons.local_fire_department, Colors.red)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('Nutrition Score', '${_nutritionAnalytics['nutritionScore']}%', Icons.star, Colors.amber)),
+              Expanded(child: _buildStatCard('Avg Calories', '${_nutritionAnalytics['averageCalories']}', Icons.local_fire_department, _chartPalette[3])),
+              const SizedBox(width: Space.md),
+              Expanded(child: _buildStatCard('Nutrition Score', '${_nutritionAnalytics['nutritionScore']}%', Icons.star, _chartPalette[4])),
             ],
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Macronutrients Breakdown
           _buildMacronutrientsChart(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Hydration Tracking
           _buildHydrationCard(),
@@ -336,18 +378,18 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
 
   Widget _buildProgressAnalyticsTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       child: Column(
         children: [
           // Progress Overview
           _buildProgressOverviewCard(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Progress Metrics
           _buildProgressMetricsCards(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Progress Chart
           _buildProgressChart(),
@@ -358,24 +400,24 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
 
   Widget _buildStreakAnalyticsTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Space.lg),
       child: Column(
         children: [
           // Current Streak
           _buildCurrentStreakCard(),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Streak Statistics
           Row(
             children: [
-              Expanded(child: _buildStatCard('Current', '${_streakAnalytics['currentStreak']} days', Icons.local_fire_department, Colors.orange)),
-              const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('Longest', '${_streakAnalytics['longestStreak']} days', Icons.emoji_events, Colors.amber)),
+              Expanded(child: _buildStatCard('Current', '${_streakAnalytics['currentStreak']} days', Icons.local_fire_department, _chartPalette[1])),
+              const SizedBox(width: Space.md),
+              Expanded(child: _buildStatCard('Longest', '${_streakAnalytics['longestStreak']} days', Icons.emoji_events, _chartPalette[4])),
             ],
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: Space.xl),
           
           // Weekly Goal Progress
           _buildWeeklyGoalCard(),
@@ -385,25 +427,27 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    final tokens = context.tokens;
     return AnimatedBuilder(
       animation: _chartAnimationController,
       builder: (context, child) {
         return Transform.scale(
           scale: _chartAnimationController.value,
           child: Card(
+            color: tokens.surface,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(Space.lg),
               child: Column(
                 children: [
                   Icon(icon, size: 32, color: color),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Space.sm),
                   Text(
                     value,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: context.typo.title,
                   ),
                   Text(
                     title,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -416,37 +460,39 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildWorkoutTypesChart() {
+    final tokens = context.tokens;
     final workoutTypes = _workoutAnalytics['workoutTypes'] as Map<String, int>? ?? {};
-    
+
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Workout Types Distribution',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             ...workoutTypes.entries.map((entry) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: Row(
                 children: [
                   Expanded(
                     flex: 2,
-                    child: Text(entry.key),
+                    child: Text(entry.key, style: context.typo.body),
                   ),
                   Expanded(
                     flex: 3,
                     child: LinearProgressIndicator(
                       value: entry.value / (workoutTypes.values.isNotEmpty ? workoutTypes.values.reduce(math.max) : 1),
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                      backgroundColor: tokens.border,
+                      valueColor: AlwaysStoppedAnimation<Color>(tokens.brand),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text('${entry.value}'),
+                  const SizedBox(width: Space.sm),
+                  Text('${entry.value}', style: context.typo.body),
                 ],
               ),
             )),
@@ -457,17 +503,19 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildWeeklyTrendChart() {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Weekly Trend',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             SizedBox(
               height: 200,
               child: _buildSimpleLineChart(),
@@ -479,6 +527,7 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildSimpleLineChart() {
+    // Primary (and only) series on this chart → brand token.
     return AnimatedBuilder(
       animation: _chartAnimationController,
       builder: (context, child) {
@@ -487,7 +536,7 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
           painter: SimpleLineChartPainter(
             data: _weeklyData,
             animationValue: _chartAnimationController.value,
-            color: Theme.of(context).colorScheme.primary,
+            color: context.tokens.brand,
           ),
         );
       },
@@ -495,24 +544,26 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildMacronutrientsChart() {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Macronutrients Breakdown',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             Row(
               children: [
-                Expanded(child: _buildMacroBar('Protein', _nutritionAnalytics['proteinIntake'] ?? 0, 150, Colors.red)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildMacroBar('Carbs', _nutritionAnalytics['carbIntake'] ?? 0, 300, Colors.blue)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildMacroBar('Fat', _nutritionAnalytics['fatIntake'] ?? 0, 100, Colors.orange)),
+                Expanded(child: _buildMacroBar('Protein', _nutritionAnalytics['proteinIntake'] ?? 0, 150, _chartPalette[3])),
+                const SizedBox(width: Space.sm),
+                Expanded(child: _buildMacroBar('Carbs', _nutritionAnalytics['carbIntake'] ?? 0, 300, _chartPalette[0])),
+                const SizedBox(width: Space.sm),
+                Expanded(child: _buildMacroBar('Fat', _nutritionAnalytics['fatIntake'] ?? 0, 100, _chartPalette[1])),
               ],
             ),
           ],
@@ -522,18 +573,19 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildMacroBar(String label, int current, int target, Color color) {
+    final tokens = context.tokens;
     final percentage = current / target;
-    
+
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
+        Text(label, style: context.typo.body.copyWith(fontWeight: FontWeight.w500)),
+        const SizedBox(height: Space.sm),
         Container(
           height: 100,
           width: 20,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: Colors.grey[300],
+            color: tokens.border,
           ),
           child: AnimatedBuilder(
             animation: _chartAnimationController,
@@ -551,34 +603,36 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
             },
           ),
         ),
-        const SizedBox(height: 8),
-        Text('${current}g', style: const TextStyle(fontSize: 12)),
-        Text('/${target}g', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+        const SizedBox(height: Space.sm),
+        Text('${current}g', style: context.typo.bodySmall),
+        Text('/${target}g', style: context.typo.label.copyWith(color: tokens.inkMuted, fontSize: 10)),
       ],
     );
   }
 
   Widget _buildHydrationCard() {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Hydration Tracking',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             Row(
               children: [
-                Icon(Icons.water_drop, size: 48, color: Colors.blue[300]),
-                const SizedBox(width: 16),
+                Icon(Icons.water_drop, size: 48, color: _chartPalette[0]),
+                const SizedBox(width: Space.lg),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${_nutritionAnalytics['waterIntake']} L', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    Text('Daily average', style: TextStyle(color: Colors.grey[600])),
+                    Text('${_nutritionAnalytics['waterIntake']} L', style: context.typo.title),
+                    Text('Daily average', style: context.typo.body.copyWith(color: tokens.inkMuted)),
                   ],
                 ),
               ],
@@ -590,17 +644,19 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildProgressOverviewCard() {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Overall Progress',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             Center(
               child: AnimatedBuilder(
                 animation: _chartAnimationController,
@@ -611,18 +667,18 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
                     child: CircularProgressIndicator(
                       value: (_progressAnalytics['overallProgress'] ?? 0) / 100 * _chartAnimationController.value,
                       strokeWidth: 12,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                      backgroundColor: tokens.border,
+                      valueColor: AlwaysStoppedAnimation<Color>(tokens.brand),
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             Center(
               child: Text(
                 '${_progressAnalytics['overallProgress']}%',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: context.typo.title,
               ),
             ),
           ],
@@ -636,17 +692,17 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
       children: [
         Row(
           children: [
-            Expanded(child: _buildProgressMetricCard('Weight Change', '${_progressAnalytics['weightChange']}kg', Icons.monitor_weight, Colors.green)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildProgressMetricCard('Strength Gain', '+${_progressAnalytics['strengthGain']}%', Icons.fitness_center, Colors.red)),
+            Expanded(child: _buildProgressMetricCard('Weight Change', '${_progressAnalytics['weightChange']}kg', Icons.monitor_weight, context.tokens.success)),
+            const SizedBox(width: Space.md),
+            Expanded(child: _buildProgressMetricCard('Strength Gain', '+${_progressAnalytics['strengthGain']}%', Icons.fitness_center, _chartPalette[3])),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         Row(
           children: [
-            Expanded(child: _buildProgressMetricCard('Endurance', '+${_progressAnalytics['enduranceImprovement']}%', Icons.directions_run, Colors.blue)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildProgressMetricCard('Flexibility', '+${_progressAnalytics['flexibilityGain']}%', Icons.self_improvement, Colors.purple)),
+            Expanded(child: _buildProgressMetricCard('Endurance', '+${_progressAnalytics['enduranceImprovement']}%', Icons.directions_run, _chartPalette[0])),
+            const SizedBox(width: Space.md),
+            Expanded(child: _buildProgressMetricCard('Flexibility', '+${_progressAnalytics['flexibilityGain']}%', Icons.self_improvement, _chartPalette[2])),
           ],
         ),
       ],
@@ -654,15 +710,17 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildProgressMetricCard(String title, String value, IconData icon, Color color) {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           children: [
             Icon(icon, size: 32, color: color),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 12), textAlign: TextAlign.center),
+            const SizedBox(height: Space.sm),
+            Text(value, style: context.typo.titleSmall),
+            Text(title, style: context.typo.bodySmall.copyWith(color: tokens.inkMuted), textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -670,20 +728,27 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildProgressChart() {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Progress Over Time',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
-            const SizedBox(
+            const SizedBox(height: Space.lg),
+            SizedBox(
               height: 200,
-              child: Center(child: Text('Progress chart coming soon')),
+              child: Center(
+                child: Text(
+                  'Progress chart coming soon',
+                  style: context.typo.body.copyWith(color: tokens.inkMuted),
+                ),
+              ),
             ),
           ],
         ),
@@ -692,35 +757,31 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildCurrentStreakCard() {
+    final tokens = context.tokens;
     return Card(
+      color: tokens.surface,
       child: Container(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(Space.xl),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
+          borderRadius: BorderRadius.circular(Radii.statTile),
+          // Decorative "streak fire" gradient — see _StreakColors above.
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.orange[400]!, Colors.deepOrange[600]!],
+            colors: [_StreakColors.fireStart, _StreakColors.fireEnd],
           ),
         ),
         child: Column(
           children: [
-            const Icon(Icons.local_fire_department, size: 64, color: Colors.white),
-            const SizedBox(height: 16),
+            Icon(Icons.local_fire_department, size: 64, color: tokens.onBrand),
+            const SizedBox(height: Space.lg),
             Text(
               '${_streakAnalytics['currentStreak']} Days',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: context.typo.title.copyWith(fontSize: 32, color: tokens.onBrand),
             ),
-            const Text(
+            Text(
               'Current Streak',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
-              ),
+              style: context.typo.body.copyWith(color: tokens.onBrand.withValues(alpha: 0.7)),
             ),
           ],
         ),
@@ -729,21 +790,23 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
   }
 
   Widget _buildWeeklyGoalCard() {
+    final tokens = context.tokens;
     final completed = _streakAnalytics['weeklyCompleted'] ?? 0;
     final goal = _streakAnalytics['weeklyGoal'] ?? 5;
     final percentage = completed / goal;
 
     return Card(
+      color: tokens.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(Space.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Weekly Goal Progress',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.typo.title,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             Row(
               children: [
                 Expanded(
@@ -752,23 +815,23 @@ class _AdvancedAnalyticsDashboardState extends State<AdvancedAnalyticsDashboard>
                     builder: (context, child) {
                       return LinearProgressIndicator(
                         value: percentage * _chartAnimationController.value,
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: tokens.border,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          percentage >= 1.0 ? Colors.green : Theme.of(context).colorScheme.primary,
+                          percentage >= 1.0 ? tokens.success : tokens.brand,
                         ),
                         minHeight: 8,
                       );
                     },
                   ),
                 ),
-                const SizedBox(width: 16),
-                Text('$completed / $goal'),
+                const SizedBox(width: Space.lg),
+                Text('$completed / $goal', style: context.typo.body),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             Text(
               '${(percentage * 100).round()}% completed',
-              style: TextStyle(color: Colors.grey[600]),
+              style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
             ),
           ],
         ),
