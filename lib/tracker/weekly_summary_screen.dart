@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trego/auth/auth_service.dart';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
+
+/// Chart accent colors with no equivalent semantic role in [TregoTokens]
+/// (calories = amber, water = blue). Kept as named consts per the
+/// migration guide's no-role-color rule.
+const Color _caloriesAccent = Color(0xFFFF9800); // ALLOW-HEX: calorie chart accent has no token role
+const Color _waterAccent = Color(0xFF2196F3); // ALLOW-HEX: water chart accent has no token role
 
 class WeeklySummaryScreen extends StatefulWidget {
   const WeeklySummaryScreen({super.key});
@@ -33,8 +41,15 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
   @override
   void initState() {
     super.initState();
-    _userId = AuthService().currentUser?.uid;
-    
+    try {
+      _userId = AuthService().currentUser?.uid;
+    } catch (_) {
+      // Auth unavailable (e.g. Firebase not configured in this context);
+      // treat as signed-out, mirroring the guard used elsewhere
+      // (e.g. WorkoutPlanScreen, TrackerDashboardScreen).
+      _userId = null;
+    }
+
     // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -205,19 +220,20 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: tokens.canvas,
       appBar: AppBar(
-        title: const Text('Weekly Summary'),
+        title: Text('Weekly Summary', style: context.typo.title),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFE31E24),
+                color: tokens.brand,
               ),
             )
           : CustomScrollView(
@@ -225,21 +241,21 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                 // Hero Banner
                 SliverToBoxAdapter(
                   child: Container(
-                    margin: const EdgeInsets.all(20),
-                    padding: const EdgeInsets.all(24),
+                    margin: const EdgeInsets.all(Space.xl),
+                    padding: const EdgeInsets.all(Space.xl),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFFE31E24),
-                          Color(0xFFC62828),
+                          tokens.brandContainerStart,
+                          tokens.brandContainerEnd,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE31E24).withValues(alpha: 0.3),
+                          color: tokens.brand.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -255,34 +271,34 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(Space.md),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
+                                    color: tokens.onBrand.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.analytics_rounded,
-                                    color: Colors.white,
+                                    color: tokens.onBrand,
                                     size: 24,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: Space.lg),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Weekly Summary',
-                                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                        style: context.typo.title.copyWith(
                                           fontWeight: FontWeight.w800,
-                                          color: Colors.white,
+                                          color: tokens.onBrand,
                                           letterSpacing: -0.5,
                                         ),
                                       ),
                                       Text(
                                         'Your progress this week',
-                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: Colors.white.withValues(alpha: 0.9),
+                                        style: context.typo.body.copyWith(
+                                          color: tokens.onBrand.withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -290,8 +306,8 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24),
-                            
+                            const SizedBox(height: Space.xl),
+
                             // Hero Stats
                             Row(
                               children: [
@@ -300,16 +316,16 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                     icon: '🔥',
                                     value: '$_totalWorkouts',
                                     label: 'Workouts',
-                                    color: Colors.white,
+                                    color: tokens.onBrand,
                                   ),
                                 ),
-                                const SizedBox(width: 20),
+                                const SizedBox(width: Space.xl),
                                 Expanded(
                                   child: _buildHeroStat(
                                     icon: '🏃',
                                     value: '${_totalDistance.toStringAsFixed(1)}',
                                     label: 'km Total',
-                                    color: Colors.white,
+                                    color: tokens.onBrand,
                                   ),
                                 ),
                               ],
@@ -337,23 +353,23 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                                 title: 'Avg Calories',
                                 value: '${_averageCalories.toInt()}',
                                 subtitle: 'Per day',
-                                color: const Color(0xFFFF9800),
+                                color: _caloriesAccent,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Space.md),
                             Expanded(
                               child: _buildSummaryCard(
                                 icon: Icons.water_drop_rounded,
                                 title: 'Avg Water',
                                 value: '${_averageWater.toInt()}',
                                 subtitle: 'Cups per day',
-                                color: const Color(0xFF2196F3),
+                                color: _waterAccent,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: Space.xl),
 
                       // Charts
                       if (_weightData.isNotEmpty) ...[
@@ -417,18 +433,16 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
           icon,
           style: const TextStyle(fontSize: 32),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         Text(
           value,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            fontWeight: FontWeight.w900,
+          style: context.typo.statLarge.copyWith(
             color: color,
-            letterSpacing: -1.0,
           ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          style: context.typo.bodySmall.copyWith(
             color: color.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,
           ),
@@ -444,20 +458,21 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
     required String subtitle,
     required Color color,
   }) {
+    final tokens = context.tokens;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Space.xl),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: tokens.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFE5E5E5),
+          color: tokens.border,
           width: 1,
         ),
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(Space.md),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
@@ -468,27 +483,25 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
               size: 24,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Space.md),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
+            style: context.typo.stat.copyWith(
               color: color,
-              letterSpacing: -1.0,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Space.xs),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: context.typo.titleSmall.copyWith(
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A1A1A),
+              color: tokens.ink,
             ),
           ),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF666666),
+            style: context.typo.bodySmall.copyWith(
+              color: tokens.inkMuted,
             ),
           ),
         ],
@@ -502,50 +515,51 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
     required IconData icon,
     required Widget child,
   }) {
+    final tokens = context.tokens;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: tokens.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFE5E5E5),
+          color: tokens.border,
           width: 1,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Space.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Space.md),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE31E24).withValues(alpha: 0.1),
+                    color: tokens.brand.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: const Color(0xFFE31E24),
+                    color: tokens.brand,
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: Space.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        style: context.typo.title.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1A1A),
+                          color: tokens.ink,
                         ),
                       ),
                       Text(
                         subtitle,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF666666),
+                        style: context.typo.body.copyWith(
+                          color: tokens.inkMuted,
                         ),
                       ),
                     ],
@@ -553,7 +567,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Space.xl),
             child,
           ],
         ),
@@ -562,13 +576,14 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
   }
 
   Widget _buildWeightLineChart() {
+    final tokens = context.tokens;
     if (_weightData.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(40),
+          padding: const EdgeInsets.all(40),
           child: Text(
             'No weight data available this week',
-            style: TextStyle(color: Color(0xFF666666)),
+            style: context.typo.body.copyWith(color: tokens.inkMuted),
           ),
         ),
       );
@@ -578,7 +593,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
     final weights = _weightData.map((d) => d['weight'] as double).toList();
     double maxWeight = weights.isNotEmpty ? weights[0] : 0.0;
     double minWeight = weights.isNotEmpty ? weights[0] : 0.0;
-    
+
     for (final weight in weights) {
       if (weight > maxWeight) maxWeight = weight;
       if (weight < minWeight) minWeight = weight;
@@ -591,6 +606,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
           weightData: _weightData,
           maxWeight: maxWeight,
           minWeight: minWeight,
+          lineColor: tokens.brand,
         ),
         child: Container(),
       ),
@@ -598,10 +614,11 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
   }
 
   Widget _buildCaloriesBarChart() {
+    final tokens = context.tokens;
     // Calculate max calories
     final calories = _calorieData.map((d) => d['calories'] as double).toList();
     double maxCalories = calories.isNotEmpty ? calories[0] : 0.0;
-    
+
     for (final calorie in calories) {
       if (calorie > maxCalories) maxCalories = calorie;
     }
@@ -614,26 +631,27 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
         children: _calorieData.map((data) {
           final calories = data['calories'] as double;
           final height = (maxCalories > 0 ? calories / maxCalories : 0).toDouble();
-          
+
           return Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF9800).withValues(alpha: 0.9),
+                  color: _caloriesAccent.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   calories.toInt().toString(),
-                  style: const TextStyle(
+                  style: context.typo.label.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.white, // fixed contrast text on the decorative calorie-accent badge, not a brand surface
+                    letterSpacing: 0,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Container(
                 width: 25,
                 height: 120 * height,
@@ -642,27 +660,26 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      const Color(0xFFFF9800),
-                      const Color(0xFFFF9800).withValues(alpha: 0.7),
+                      _caloriesAccent,
+                      _caloriesAccent.withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                      color: _caloriesAccent.withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Text(
                 data['date'],
-                style: const TextStyle(
-                  fontSize: 12,
+                style: context.typo.bodySmall.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF666666),
+                  color: tokens.inkMuted,
                 ),
               ),
             ],
@@ -673,10 +690,11 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
   }
 
   Widget _buildWaterBarChart() {
+    final tokens = context.tokens;
     // Calculate max water
     final waters = _waterData.map((d) => d['water'] as double).toList();
     double maxWater = waters.isNotEmpty ? waters[0] : 0.0;
-    
+
     for (final water in waters) {
       if (water > maxWater) maxWater = water;
     }
@@ -689,26 +707,27 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
         children: _waterData.map((data) {
           final water = data['water'] as double;
           final height = (maxWater > 0 ? water / maxWater : 0).toDouble();
-          
+
           return Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3).withValues(alpha: 0.9),
+                  color: _waterAccent.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   water.toInt().toString(),
-                  style: const TextStyle(
+                  style: context.typo.label.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.white, // fixed contrast text on the decorative water-accent badge, not a brand surface
+                    letterSpacing: 0,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Container(
                 width: 25,
                 height: 120 * height,
@@ -717,27 +736,26 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      const Color(0xFF2196F3),
-                      const Color(0xFF2196F3).withValues(alpha: 0.7),
+                      _waterAccent,
+                      _waterAccent.withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+                      color: _waterAccent.withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Text(
                 data['date'],
-                style: const TextStyle(
-                  fontSize: 12,
+                style: context.typo.bodySmall.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF666666),
+                  color: tokens.inkMuted,
                 ),
               ),
             ],
@@ -748,10 +766,11 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
   }
 
   Widget _buildDistanceBarChart() {
+    final tokens = context.tokens;
     // Calculate max distance
     final distances = _distanceData.map((d) => d['distance'] as double).toList();
     double maxDistance = distances.isNotEmpty ? distances[0] : 0.0;
-    
+
     for (final distance in distances) {
       if (distance > maxDistance) maxDistance = distance;
     }
@@ -764,26 +783,27 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
         children: _distanceData.map((data) {
           final distance = data['distance'] as double;
           final height = (maxDistance > 0 ? distance / maxDistance : 0).toDouble();
-          
+
           return Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C851).withValues(alpha: 0.9),
+                  color: tokens.success.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   distance.toStringAsFixed(1),
-                  style: const TextStyle(
+                  style: context.typo.label.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: tokens.onSuccess,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Container(
                 width: 25,
                 height: 120 * height,
@@ -792,27 +812,26 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      const Color(0xFF00C851),
-                      const Color(0xFF00C851).withValues(alpha: 0.7),
+                      tokens.success,
+                      tokens.success.withValues(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF00C851).withValues(alpha: 0.3),
+                      color: tokens.success.withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Text(
                 data['date'],
-                style: const TextStyle(
-                  fontSize: 12,
+                style: context.typo.bodySmall.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF666666),
+                  color: tokens.inkMuted,
                 ),
               ),
             ],
@@ -823,6 +842,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
   }
 
   Widget _buildDailyBreakdown() {
+    final tokens = context.tokens;
     final weekData = [
       ..._calorieData.asMap().entries.map((entry) {
         final index = entry.key;
@@ -834,14 +854,14 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
         final water = waterData['water'] as double;
         final distance = distanceData['distance'] as double;
         final workoutDone = index < 7 && _totalWorkouts > 0; // Simplified logic
-        
+
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: Space.md),
+          padding: const EdgeInsets.all(Space.lg),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAFAFA),
+            color: tokens.surfaceSunken,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E5E5)),
+            border: Border.all(color: tokens.border),
           ),
           child: Column(
             children: [
@@ -851,27 +871,26 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                     flex: 2,
                     child: Text(
                       dayName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A1A),
+                      style: context.typo.titleSmall.copyWith(
+                        color: tokens.ink,
                       ),
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: workoutDone ? const Color(0xFF00C851) : const Color(0xFFE5E5E5),
+                      color: workoutDone ? tokens.success : tokens.border,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
                       workoutDone ? Icons.check : Icons.close,
-                      color: workoutDone ? Colors.white : const Color(0xFF666666),
+                      color: workoutDone ? tokens.onSuccess : tokens.inkMuted,
                       size: 16,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Space.sm),
               Row(
                 children: [
                   Expanded(
@@ -879,7 +898,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                       icon: Icons.local_fire_department_rounded,
                       value: '${calories.toInt()}',
                       unit: 'cal',
-                      color: calories > 0 ? const Color(0xFFFF9800) : const Color(0xFF999999),
+                      color: calories > 0 ? _caloriesAccent : tokens.inkFaint,
                     ),
                   ),
                   Expanded(
@@ -887,7 +906,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                       icon: Icons.water_drop_rounded,
                       value: '${water.toInt()}',
                       unit: 'cups',
-                      color: water > 0 ? const Color(0xFF2196F3) : const Color(0xFF999999),
+                      color: water > 0 ? _waterAccent : tokens.inkFaint,
                     ),
                   ),
                   Expanded(
@@ -895,7 +914,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
                       icon: Icons.directions_run_rounded,
                       value: distance.toStringAsFixed(1),
                       unit: 'km',
-                      color: distance > 0 ? const Color(0xFF00C851) : const Color(0xFF999999),
+                      color: distance > 0 ? tokens.success : tokens.inkFaint,
                     ),
                   ),
                 ],
@@ -919,11 +938,10 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
+        const SizedBox(width: Space.xs),
         Text(
           '$value $unit',
-          style: TextStyle(
-            fontSize: 12,
+          style: context.typo.bodySmall.copyWith(
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -938,11 +956,13 @@ class WeightLineChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> weightData;
   final double maxWeight;
   final double minWeight;
+  final Color lineColor;
 
   WeightLineChartPainter({
     required this.weightData,
     required this.maxWeight,
     required this.minWeight,
+    required this.lineColor,
   });
 
   @override
@@ -950,12 +970,12 @@ class WeightLineChartPainter extends CustomPainter {
     if (weightData.isEmpty) return;
 
     final paint = Paint()
-      ..color = const Color(0xFFE31E24)
+      ..color = lineColor
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = const Color(0xFFE31E24).withValues(alpha: 0.1)
+      ..color = lineColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     final path = Path();
@@ -997,7 +1017,7 @@ class WeightLineChartPainter extends CustomPainter {
 
     // Draw data points
     final pointPaint = Paint()
-      ..color = const Color(0xFFE31E24)
+      ..color = lineColor
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < weightData.length; i++) {

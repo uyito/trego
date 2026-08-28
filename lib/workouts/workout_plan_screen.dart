@@ -3,6 +3,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trego/auth/auth_service.dart';
 import 'package:trego/workouts/workout_service.dart';
 import 'package:trego/workouts/workout_screen.dart'; // Added import for WorkoutScreen
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
+
+/// Decorative accent colors for the plan-screen action buttons. These are
+/// per-action hues with no matching semantic token role (Generate Plan
+/// reuses tokens.brand since it's the primary action; the confetti
+/// snackbar and hero banner reuse tokens.success since they're both
+/// completion-themed greens already in the palette).
+class _WorkoutPlanColors {
+  static const resetWeek = Color(0xFF9C27B0); // ALLOW-HEX: action accent (purple), no token role fits a decorative per-action hue
+  static const history = Color(0xFF2196F3); // ALLOW-HEX: action accent (blue), no token role fits a decorative per-action hue
+  static const heroGradientEnd = Color(0xFF4CAF50); // ALLOW-HEX: decorative hero banner gradient end-stop (start uses tokens.success); no token role fits a second green stop
+  _WorkoutPlanColors._();
+}
 
 class WorkoutPlanScreen extends StatefulWidget {
   const WorkoutPlanScreen({super.key});
@@ -28,8 +42,14 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
   @override
   void initState() {
     super.initState();
-    _userId = AuthService().currentUser?.uid;
-    
+    try {
+      _userId = AuthService().currentUser?.uid;
+    } catch (_) {
+      // Auth unavailable (e.g. Firebase not configured in this context);
+      // treat as signed-out.
+      _userId = null;
+    }
+
     // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -316,20 +336,24 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
   }
 
   void _showConfetti() {
+    final tokens = context.tokens;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.celebration, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text('Workout completed! Keep the streak alive! 💪'),
+            Icon(Icons.celebration, color: tokens.onSuccess),
+            const SizedBox(width: Space.sm),
+            Text(
+              'Workout completed! Keep the streak alive! 💪',
+              style: TextStyle(color: tokens.onSuccess),
+            ),
           ],
         ),
-        backgroundColor: const Color(0xFF00C851),
+        backgroundColor: tokens.success,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Space.md),
         ),
       ),
     );
@@ -346,22 +370,28 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
 
   void _showWorkoutTemplates() {
     // TODO: Implement workout templates screen
+    final tokens = context.tokens;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Workout templates feature coming soon!'),
-        backgroundColor: Color(0xFF4CAF50),
+      SnackBar(
+        content: Text(
+          'Workout templates feature coming soon!',
+          style: TextStyle(color: tokens.onSuccess),
+        ),
+        backgroundColor: tokens.success,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final typo = context.typo;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: tokens.canvas,
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFE31E24),
+                color: tokens.brand,
               ),
             )
           : CustomScrollView(
@@ -369,22 +399,22 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                 // Hero Banner
                 SliverToBoxAdapter(
                   child: Container(
-                    margin: const EdgeInsets.all(20),
-                    padding: const EdgeInsets.all(24),
+                    margin: const EdgeInsets.all(Space.xl - Space.xs),
+                    padding: const EdgeInsets.all(Space.xl),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF00C851),
-                          Color(0xFF4CAF50),
+                          tokens.success,
+                          _WorkoutPlanColors.heroGradientEnd,
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(Space.xl),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00C851).withValues(alpha: 0.3),
-                          blurRadius: 20,
+                          color: tokens.success.withValues(alpha: 0.3),
+                          blurRadius: Space.xl - Space.xs,
                           offset: const Offset(0, 10),
                         ),
                       ],
@@ -399,34 +429,34 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(Space.md),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(12),
+                                    color: tokens.onSuccess.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(Space.md),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.fitness_center_rounded,
-                                    color: Colors.white,
+                                    color: tokens.onSuccess,
                                     size: 24,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: Space.lg),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'This Week\'s Plan',
-                                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                        style: typo.title.copyWith(
                                           fontWeight: FontWeight.w800,
-                                          color: Colors.white,
+                                          color: tokens.onSuccess,
                                           letterSpacing: -0.5,
                                         ),
                                       ),
                                       Text(
                                         'Stay consistent, stay strong',
-                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: Colors.white.withValues(alpha: 0.9),
+                                        style: typo.body.copyWith(
+                                          color: tokens.onSuccess.withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -434,8 +464,8 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24),
-                            
+                            const SizedBox(height: Space.xl),
+
                             // Hero Stats
                             Row(
                               children: [
@@ -444,7 +474,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                     icon: '🔥',
                                     value: '$_workoutStreak',
                                     label: 'Day Streak',
-                                    color: Colors.white,
+                                    color: tokens.onSuccess,
                                   ),
                                 ),
                                 const SizedBox(width: 20),
@@ -453,7 +483,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                     icon: '✅',
                                     value: '${_workouts.where((w) => w['completed'] == true).length}',
                                     label: 'Completed',
-                                    color: Colors.white,
+                                    color: tokens.onSuccess,
                                   ),
                                 ),
                               ],
@@ -467,7 +497,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
 
                 // Main Content
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: Space.xl - Space.xs),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       // Action Buttons
@@ -480,23 +510,23 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                 onPressed: _isGenerating ? null : _generateWorkoutPlan,
                                 icon: Icons.auto_awesome_rounded,
                                 label: _isGenerating ? 'Generating...' : 'Generate Plan',
-                                color: const Color(0xFFE31E24),
+                                color: tokens.brand,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Space.md),
                             Expanded(
                               child: _buildActionButton(
                                 onPressed: _resetWeek,
                                 icon: Icons.refresh_rounded,
                                 label: 'Reset Week',
-                                color: const Color(0xFF9C27B0),
+                                color: _WorkoutPlanColors.resetWeek,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      
+                      const SizedBox(height: Space.lg),
+
                       // Additional Action Buttons
                       FadeTransition(
                         opacity: _fadeAnimation,
@@ -507,7 +537,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                 onPressed: _showWorkoutHistory,
                                 icon: Icons.history_rounded,
                                 label: 'History',
-                                color: const Color(0xFF2196F3),
+                                color: _WorkoutPlanColors.history,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -516,17 +546,17 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                                 onPressed: _showWorkoutTemplates,
                                 icon: Icons.list_alt_rounded,
                                 label: 'Templates',
-                                color: const Color(0xFF4CAF50),
+                                color: tokens.success,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: Space.xl),
 
                       // Workout Days
                       ..._workouts.map((workout) => _buildWorkoutDay(workout)).toList(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: Space.xxl + Space.sm),
                     ]),
                   ),
                 ),
@@ -547,10 +577,11 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
           icon,
           style: const TextStyle(fontSize: 32),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         Text(
           value,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+          style: context.typo.statLarge.copyWith(
+            fontSize: 32,
             fontWeight: FontWeight.w900,
             color: color,
             letterSpacing: -1.0,
@@ -558,7 +589,7 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          style: context.typo.body.copyWith(
             color: color.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,
           ),
@@ -573,17 +604,18 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
     required String label,
     required Color color,
   }) {
+    final tokens = context.tokens;
     return Container(
       height: 56,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          foregroundColor: Colors.white,
+          foregroundColor: tokens.onBrand,
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Space.lg),
           ),
         ),
         child: Row(
@@ -592,15 +624,12 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
           children: [
             if (onPressed != null) ...[
               Icon(icon, size: 16),
-              const SizedBox(width: 4),
+              const SizedBox(width: Space.xs),
             ],
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.typo.button.copyWith(color: tokens.onBrand),
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -618,18 +647,20 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
     final exercises = List<String>.from(workout['exercises'] ?? []);
     final completed = workout['completed'] as bool? ?? false;
     final workoutId = workout['id'] as String? ?? '';
+    final tokens = context.tokens;
+    final typo = context.typo;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: Space.lg),
       decoration: BoxDecoration(
-        color: completed 
-            ? const Color(0xFF00C851).withValues(alpha: 0.1)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: completed
+            ? tokens.success.withValues(alpha: 0.1)
+            : tokens.surface,
+        borderRadius: BorderRadius.circular(Radii.screenWrapper),
         border: Border.all(
-          color: completed 
-              ? const Color(0xFF00C851).withValues(alpha: 0.3)
-              : const Color(0xFFE5E5E5),
+          color: completed
+              ? tokens.success.withValues(alpha: 0.3)
+              : tokens.border,
           width: 1,
         ),
       ),
@@ -637,43 +668,39 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(Space.xl - Space.xs),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Space.md),
                   decoration: BoxDecoration(
-                    color: completed 
-                        ? const Color(0xFF00C851)
-                        : const Color(0xFFE31E24).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: completed
+                        ? tokens.success
+                        : tokens.brand.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(Space.md),
                   ),
                   child: Icon(
                     completed ? Icons.check_rounded : Icons.fitness_center_rounded,
-                    color: completed ? Colors.white : const Color(0xFFE31E24),
+                    color: completed ? tokens.onSuccess : tokens.brand,
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: Space.lg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         day,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        style: typo.title.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: completed 
-                              ? const Color(0xFF00C851)
-                              : const Color(0xFF1A1A1A),
+                          color: completed ? tokens.success : tokens.ink,
                         ),
                       ),
                       Text(
                         focus,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: completed 
-                              ? const Color(0xFF00C851)
-                              : const Color(0xFF666666),
+                        style: typo.body.copyWith(
+                          color: completed ? tokens.success : tokens.inkMuted,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -683,21 +710,21 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                 Switch(
                   value: completed,
                   onChanged: (value) => _toggleWorkoutCompletion(workoutId, value),
-                  activeColor: const Color(0xFF00C851),
+                  activeColor: tokens.success,
                 ),
               ],
             ),
           ),
-          
+
           // Exercises
           if (exercises.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: Space.xl - Space.xs, vertical: Space.lg),
               decoration: BoxDecoration(
-                color: const Color(0xFFFAFAFA),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+                color: tokens.surfaceSunken,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(Radii.screenWrapper),
+                  bottomRight: Radius.circular(Radii.screenWrapper),
                 ),
               ),
               child: Column(
@@ -705,30 +732,30 @@ class _WorkoutPlanScreenState extends State<WorkoutPlanScreen>
                 children: [
                   Text(
                     'Exercises:',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: typo.titleSmall.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1A1A1A),
+                      color: tokens.ink,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Space.sm),
                   ...exercises.map((exercise) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.only(bottom: Space.xs),
                     child: Row(
                       children: [
                         Container(
                           width: 6,
                           height: 6,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE31E24),
+                            color: tokens.brand,
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: Space.md),
                         Expanded(
                           child: Text(
                             exercise,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF666666),
+                            style: typo.body.copyWith(
+                              color: tokens.inkMuted,
                             ),
                           ),
                         ),

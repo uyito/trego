@@ -7,6 +7,8 @@ import 'package:trego/social/screens/friends_screen.dart';
 import 'package:trego/social/social_service.dart';
 import 'package:trego/social/widgets/comments_sheet.dart';
 
+import '../helpers/test_app.dart';
+
 class _FakeSocialService implements SocialService {
   List<Map<String, dynamic>> items;
   int unreadCount;
@@ -59,12 +61,14 @@ Map<String, dynamic> _n(
     };
 
 void main() {
+  initTestEnv();
+
   Widget wrap(_FakeSocialService svc) => MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => NotificationsProvider(service: svc)),
           Provider<SocialService>.value(value: svc),
         ],
-        child: const MaterialApp(home: NotificationsScreen()),
+        child: testApp(const NotificationsScreen()),
       );
 
   testWidgets('empty state when there are no notifications', (tester) async {

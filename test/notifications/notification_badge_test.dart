@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trego/notifications/widgets/notification_badge.dart';
 
+import '../helpers/test_app.dart';
+
 void main() {
+  initTestEnv();
+
   Widget wrap(int count) =>
-      MaterialApp(home: Scaffold(body: Center(child: NotificationBadge(count: count))));
+      testApp(Scaffold(body: Center(child: NotificationBadge(count: count))));
 
   testWidgets('hidden at zero', (tester) async {
     await tester.pumpWidget(wrap(0));
