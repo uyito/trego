@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trego/workouts/workout_service.dart';
 import 'package:trego/auth/auth_service.dart';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
 
 class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
@@ -11,32 +13,39 @@ class WorkoutScreen extends StatefulWidget {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  final WorkoutService _workoutService = WorkoutService();
+  // Lazy so construction (which touches Firestore) is deferred until the
+  // signed-in StreamBuilder path actually reads it.
+  late final WorkoutService _workoutService = WorkoutService();
   String? _userId;
 
   @override
   void initState() {
     super.initState();
-    _userId = AuthService().currentUser?.uid;
+    try {
+      _userId = AuthService().currentUser?.uid;
+    } catch (_) {
+      // Auth unavailable (e.g. Firebase not configured in this context);
+      // treat as signed-out.
+      _userId = null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final typo = context.typo;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: tokens.canvas,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: tokens.surfaceSunken,
         elevation: 0,
         title: Text(
           'Workout History',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1A1A1A),
-          ),
+          style: typo.title.copyWith(color: tokens.ink),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A1A)),
+          icon: Icon(Icons.arrow_back_rounded, color: tokens.ink),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -54,9 +63,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFFE31E24),
+                      color: tokens.brand,
                     ),
                   );
                 }
@@ -71,21 +80,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         Icon(
                           Icons.fitness_center_rounded,
                           size: 64,
-                          color: Colors.grey[400],
+                          color: tokens.inkMuted,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: Space.lg),
                         Text(
                           'No workout history yet',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                          style: typo.titleSmall.copyWith(color: tokens.inkMuted),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: Space.sm),
                         Text(
                           'Complete your first workout to see it here!',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[500],
-                          ),
+                          style: typo.body.copyWith(color: tokens.inkMuted),
                         ),
                       ],
                     ),
@@ -93,7 +98,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(Space.lg),
                   itemCount: workouts.length,
                   itemBuilder: (context, index) {
                     final workout = workouts[index].data() as Map<String, dynamic>;
@@ -103,45 +108,43 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     final weekStart = workout['weekStart'] as String? ?? '';
 
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      color: tokens.surface,
+                      margin: const EdgeInsets.only(bottom: Space.md),
                       child: ListTile(
                         leading: Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(Space.sm),
                           decoration: BoxDecoration(
-                            color: completed 
-                                ? const Color(0xFF00C851).withValues(alpha: 0.1)
-                                : const Color(0xFFE31E24).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            color: completed
+                                ? tokens.success.withValues(alpha: 0.1)
+                                : tokens.brand.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(Space.sm),
                           ),
                           child: Icon(
                             completed ? Icons.check_rounded : Icons.fitness_center_rounded,
-                            color: completed ? const Color(0xFF00C851) : const Color(0xFFE31E24),
+                            color: completed ? tokens.success : tokens.brand,
                             size: 20,
                           ),
                         ),
                         title: Text(
                           day,
-                          style: TextStyle(
+                          style: typo.body.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: completed ? const Color(0xFF00C851) : Colors.black,
+                            color: completed ? tokens.success : tokens.ink,
                           ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(focus),
+                            Text(focus, style: typo.body.copyWith(color: tokens.ink)),
                             Text(
                               'Week of $weekStart',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
+                              style: typo.bodySmall.copyWith(color: tokens.inkMuted),
                             ),
                           ],
                         ),
                         trailing: Icon(
                           completed ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                          color: completed ? const Color(0xFF00C851) : Colors.grey,
+                          color: completed ? tokens.success : tokens.inkMuted,
                         ),
                       ),
                     );
