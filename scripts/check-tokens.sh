@@ -22,6 +22,7 @@ FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
   lib/social/screens/social_hub_screen.dart \
   lib/social/screens/social_feed_screen.dart \
   lib/social/screens/friends_screen.dart \
+  lib/social/screens/challenges_screen.dart \
   lib/recipes/recipe_screen.dart \
   lib/tdee/tdee_screen.dart"
 

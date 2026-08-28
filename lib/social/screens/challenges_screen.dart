@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
+import '../../shared/theme/context_tokens.dart';
+import '../../shared/theme/trego_tokens.dart';
 import '../social_service.dart';
 
+/// Decorative accent colors for challenge categories. These are per-type
+/// hues with no matching semantic token role (steps reuses tokens.success
+/// since it's already a green in the palette).
+class _ChallengeColors {
+  static const workouts = Color(0xFF2196F3); // ALLOW-HEX: category accent (blue), no token role fits a decorative per-type hue
+  static const distance = Color(0xFFFF9800); // ALLOW-HEX: category accent (orange), no token role fits a decorative per-type hue
+  static const calories = Color(0xFFF44336); // ALLOW-HEX: category accent (red), no token role fits a decorative per-type hue
+  static const weightLoss = Color(0xFF9C27B0); // ALLOW-HEX: category accent (purple), no token role fits a decorative per-type hue
+  _ChallengeColors._();
+}
+
 class ChallengesScreen extends StatefulWidget {
-  const ChallengesScreen({super.key});
+  /// Injectable for tests; defaults to a real [SocialService].
+  final SocialService? service;
+
+  const ChallengesScreen({super.key, this.service});
 
   @override
   State<ChallengesScreen> createState() => _ChallengesScreenState();
 }
 
 class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerProviderStateMixin {
-  final SocialService _socialService = SocialService();
+  late final SocialService _socialService = widget.service ?? SocialService();
   late TabController _tabController;
-  
+
   List<Map<String, dynamic>> _activeChallenges = [];
   List<Map<String, dynamic>> _availableChallenges = [];
   List<Map<String, dynamic>> _completedChallenges = [];
@@ -26,10 +42,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
 
   Future<void> _loadChallenges() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final allChallenges = await _socialService.getChallenges();
-      
+
       setState(() {
         _activeChallenges = allChallenges.where((c) => c['status'] == 'active' && c['isParticipating'] == true).toList();
         _availableChallenges = allChallenges.where((c) => c['status'] == 'active' && c['isParticipating'] != true).toList();
@@ -48,17 +64,24 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Scaffold(
+      backgroundColor: tokens.canvas,
       appBar: AppBar(
-        title: const Text('Challenges'),
+        backgroundColor: tokens.surfaceSunken,
+        foregroundColor: tokens.ink,
+        title: Text('Challenges', style: context.typo.title),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: Icon(Icons.add, color: tokens.ink),
             onPressed: _showCreateChallengeDialog,
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
+          labelColor: tokens.brand,
+          unselectedLabelColor: tokens.inkMuted,
+          indicatorColor: tokens.brand,
           tabs: [
             Tab(text: 'Active (${_activeChallenges.length})'),
             Tab(text: 'Available (${_availableChallenges.length})'),
@@ -83,15 +106,20 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
     }
 
     if (_activeChallenges.isEmpty) {
+      final tokens = context.tokens;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text('No active challenges', style: Theme.of(context).textTheme.headlineSmall),
-            const Text('Join a challenge to get started!'),
-            const SizedBox(height: 24),
+            Icon(Icons.emoji_events_outlined, size: 64, color: tokens.inkMuted),
+            const SizedBox(height: Space.lg),
+            Text('No active challenges', style: context.typo.title),
+            const SizedBox(height: Space.xs),
+            Text(
+              'Join a challenge to get started!',
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
+            ),
+            const SizedBox(height: Space.xl),
             ElevatedButton(
               onPressed: () => _tabController.animateTo(1),
               child: const Text('Browse Challenges'),
@@ -116,15 +144,20 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
     }
 
     if (_availableChallenges.isEmpty) {
+      final tokens = context.tokens;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text('No available challenges', style: Theme.of(context).textTheme.headlineSmall),
-            const Text('Create your own challenge!'),
-            const SizedBox(height: 24),
+            Icon(Icons.search_off, size: 64, color: tokens.inkMuted),
+            const SizedBox(height: Space.lg),
+            Text('No available challenges', style: context.typo.title),
+            const SizedBox(height: Space.xs),
+            Text(
+              'Create your own challenge!',
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
+            ),
+            const SizedBox(height: Space.xl),
             ElevatedButton(
               onPressed: _showCreateChallengeDialog,
               child: const Text('Create Challenge'),
@@ -149,14 +182,19 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
     }
 
     if (_completedChallenges.isEmpty) {
-      return const Center(
+      final tokens = context.tokens;
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('No completed challenges'),
-            Text('Complete challenges to see your history here'),
+            Icon(Icons.history, size: 64, color: tokens.inkMuted),
+            const SizedBox(height: Space.lg),
+            Text('No completed challenges', style: context.typo.title),
+            const SizedBox(height: Space.xs),
+            Text(
+              'Complete challenges to see your history here',
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
+            ),
           ],
         ),
       );
@@ -169,29 +207,39 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
   }
 
   Widget _buildChallengeCard(Map<String, dynamic> challenge, {bool isActive = false, bool isCompleted = false}) {
+    final tokens = context.tokens;
     final progress = challenge['userProgress'] ?? 0.0;
     final target = challenge['target'] ?? 1;
     final progressPercent = (progress / target * 100).clamp(0, 100);
+    final challengeColor = _getChallengeColor(challenge['type']);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: tokens.surface,
+      margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.standardCard),
+        side: BorderSide(color: tokens.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundColor: _getChallengeColor(challenge['type']),
-              child: Icon(_getChallengeIcon(challenge['type']), color: Colors.white),
+              backgroundColor: challengeColor,
+              child: Icon(_getChallengeIcon(challenge['type']), color: tokens.onBrand),
             ),
             title: Text(
               challenge['title'] ?? 'Unknown Challenge',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: context.typo.titleSmall,
             ),
-            subtitle: Text(challenge['description'] ?? ''),
+            subtitle: Text(
+              challenge['description'] ?? '',
+              style: context.typo.body.copyWith(color: tokens.inkMuted),
+            ),
             trailing: _buildChallengeMenu(challenge),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: Space.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -200,47 +248,50 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                   children: [
                     Text(
                       '${challenge['participantsCount'] ?? 0} participants',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
                     ),
                     Text(
                       _formatDuration(challenge['duration']),
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Space.sm),
                 if (isActive || isCompleted) ...[
-                  LinearProgressIndicator(
-                    value: progressPercent / 100,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      isCompleted ? Colors.green : _getChallengeColor(challenge['type']),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: progressPercent / 100,
+                      backgroundColor: tokens.border,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isCompleted ? tokens.success : challengeColor,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: Space.xs),
                   Text(
                     '${progress.toInt()}/$target ${_getChallengeUnit(challenge['type'])}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: context.typo.bodySmall.copyWith(color: tokens.inkMuted),
                   ),
                 ],
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.sm),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
             child: Row(
               children: [
                 if (challenge['isPublic'] == true)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: Space.sm, vertical: Space.xs),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: tokens.brand.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(Radii.statTile),
                     ),
-                    child: const Text(
+                    child: Text(
                       'PUBLIC',
-                      style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold),
+                      style: context.typo.label.copyWith(color: tokens.brand),
                     ),
                   ),
                 const Spacer(),
@@ -302,7 +353,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                     border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 TextField(
                   controller: descriptionController,
                   decoration: const InputDecoration(
@@ -311,7 +362,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                   ),
                   maxLines: 2,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 DropdownButtonFormField<String>(
                   value: selectedType,
                   decoration: const InputDecoration(labelText: 'Challenge Type'),
@@ -324,7 +375,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                   ],
                   onChanged: (value) => setState(() => selectedType = value!),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 Row(
                   children: [
                     Expanded(
@@ -335,7 +386,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                         onChanged: (value) => target = int.tryParse(value) ?? target,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: Space.lg),
                     Expanded(
                       child: TextFormField(
                         initialValue: duration.toString(),
@@ -346,7 +397,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 SwitchListTile(
                   title: const Text('Public Challenge'),
                   subtitle: const Text('Anyone can join'),
@@ -500,7 +551,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(challenge['description'] ?? ''),
-            const SizedBox(height: 16),
+            const SizedBox(height: Space.lg),
             Text('Type: ${_getChallengeTypeDisplayName(challenge['type'])}'),
             Text('Target: ${challenge['target']} ${_getChallengeUnit(challenge['type'])}'),
             Text('Duration: ${_formatDuration(challenge['duration'])}'),
@@ -529,19 +580,20 @@ class _ChallengesScreenState extends State<ChallengesScreen> with SingleTickerPr
   }
 
   Color _getChallengeColor(String? type) {
+    final tokens = context.tokens;
     switch (type) {
       case 'workouts':
-        return Colors.blue;
+        return _ChallengeColors.workouts;
       case 'steps':
-        return Colors.green;
+        return tokens.success;
       case 'distance':
-        return Colors.orange;
+        return _ChallengeColors.distance;
       case 'calories':
-        return Colors.red;
+        return _ChallengeColors.calories;
       case 'weight_loss':
-        return Colors.purple;
+        return _ChallengeColors.weightLoss;
       default:
-        return Colors.grey;
+        return tokens.inkMuted;
     }
   }
 
