@@ -36,7 +36,9 @@ FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
   lib/notifications/notifications_screen.dart \
   lib/notifications/widgets/notification_badge.dart \
   lib/workouts/workout_plan_screen.dart \
-  lib/workouts/workout_screen.dart"
+  lib/workouts/workout_screen.dart \
+  lib/tracker/weekly_recap_widget.dart \
+  lib/tracker/weekly_summary_screen.dart"
 
 # Raw hex scan — ignore the tokens file itself (where the palette is defined)
 # and any line bearing an ALLOW-HEX marker.

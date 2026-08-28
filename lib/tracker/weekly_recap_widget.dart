@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trego/tracker/run_model.dart' as run_model;
 import 'package:trego/tracker/run_service.dart';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
 
 class WeeklyRecapWidget extends StatefulWidget {
   const WeeklyRecapWidget({super.key});
@@ -67,25 +69,26 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
 
   @override
   Widget build(BuildContext context) {
-        if (_isLoading) {
+    final tokens = context.tokens;
+    if (_isLoading) {
       return Container(
         height: 70,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: tokens.surface,
+          borderRadius: BorderRadius.circular(Radii.standardCard),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: tokens.ink.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE31E24)),
+            valueColor: AlwaysStoppedAnimation<Color>(tokens.brand),
           ),
         ),
       );
@@ -93,54 +96,54 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
 
     if (_weeklyStats == null || _weeklyStats!.totalRuns == 0) {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: tokens.surface,
+          borderRadius: BorderRadius.circular(Radii.standardCard),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: tokens.ink.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Space.lg),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE31E24).withValues(alpha: 0.1),
+                  color: tokens.brand.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center_rounded,
-                  color: Color(0xFFE31E24),
+                  color: tokens.brand,
                   size: 16,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Space.md),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Weekly Recap',
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: context.typo.bodySmall.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A1A),
+                        color: tokens.ink,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
+                    Text(
                       'No runs this week yet. Start your first run!',
-                      style: TextStyle(
-                        color: Color(0xFF666666),
-                        fontSize: 10,
+                      style: context.typo.label.copyWith(
+                        color: tokens.inkMuted,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0,
                       ),
                     ),
                   ],
@@ -155,92 +158,94 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFE31E24),
-              Color(0xFFC62828),
+              tokens.brandContainerStart,
+              tokens.brandContainerEnd,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.standardCard),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE31E24).withValues(alpha: 0.3),
+              color: tokens.brand.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.sm),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: tokens.onBrand.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center_rounded,
-                  color: Colors.white,
+                  color: tokens.onBrand,
                   size: 16,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Space.md),
               Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Flexible(
                       child: _buildStatItem(
+                        context,
                         icon: '📏',
                         value: '${_weeklyStats!.totalDistance.toStringAsFixed(1)}',
                         label: 'km',
-                        color: Colors.white,
+                        color: tokens.onBrand,
                       ),
                     ),
                     Flexible(
                       child: _buildStatItem(
+                        context,
                         icon: '⏱️',
                         value: run_model.Run.formatDuration(_weeklyStats!.totalTime),
                         label: 'time',
-                        color: Colors.white,
+                        color: tokens.onBrand,
                       ),
                     ),
                     Flexible(
                       child: _buildStatItem(
+                        context,
                         icon: '⚡',
                         value: run_model.Run.formatPace(_weeklyStats!.averagePace),
                         label: 'avg pace',
-                        color: Colors.white,
+                        color: tokens.onBrand,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Space.sm),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
+                  Text(
                     'This Week',
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: context.typo.bodySmall.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: tokens.onBrand,
                     ),
                   ),
                   Text(
                     '${_weeklyStats!.totalRuns} runs',
-                    style: const TextStyle(
-                      fontSize: 10,
+                    style: context.typo.label.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      color: tokens.onBrand,
+                      letterSpacing: 0,
                     ),
                   ),
                 ],
@@ -252,7 +257,8 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
     );
   }
 
-  Widget _buildStatItem({
+  Widget _buildStatItem(
+    BuildContext context, {
     required String icon,
     required String value,
     required String label,
@@ -268,20 +274,23 @@ class _WeeklyRecapWidgetState extends State<WeeklyRecapWidget>
         const SizedBox(height: 1),
         Text(
           value,
-          style: TextStyle(
+          style: context.typo.label.copyWith(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: color,
+            letterSpacing: 0,
           ),
         ),
         Text(
           label,
-          style: TextStyle(
+          style: context.typo.label.copyWith(
             fontSize: 7,
+            fontWeight: FontWeight.w400,
             color: color.withValues(alpha: 0.8),
+            letterSpacing: 0,
           ),
         ),
       ],
     );
   }
-} 
+}
