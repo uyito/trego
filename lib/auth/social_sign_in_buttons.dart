@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:trego/auth/auth_service.dart';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
+
+/// Brand-mandated colors for the Google and Apple sign-in buttons. Google
+/// and Apple's sign-in guidelines require these exact fills/marks — they
+/// are NOT part of the app's token palette and must not shift with theme.
+class _SocialBrand {
+  static const googleSurface = Color(0xFFFFFFFF); // ALLOW-HEX: Google brand guideline (white button surface)
+  static const googleGlyph = Color(0xFFEA4335); // ALLOW-HEX: Google brand guideline ("G" mark red)
+  static const googleLabel = Color(0xFF1F2937); // ALLOW-HEX: Google brand guideline (button label ink)
+  static const appleSurface = Color(0xFF000000); // ALLOW-HEX: Apple brand guideline (black button surface)
+  static const appleLabel = Color(0xFFFFFFFF); // ALLOW-HEX: Apple brand guideline (white label/mark on black)
+  _SocialBrand._();
+}
 
 class SocialSignInButtons extends StatelessWidget {
   final AuthService authService;
@@ -15,18 +29,21 @@ class SocialSignInButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Column(
       children: [
-        // Google Sign-In Button
+        // Google Sign-In Button. Fill/glyph colors are Google
+        // brand-mandated (see _SocialBrand) and are not tokenized.
         Container(
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+            color: _SocialBrand.googleSurface,
+            borderRadius: BorderRadius.circular(Radii.button),
+            border: Border.all(color: tokens.border),
             boxShadow: [
               BoxShadow(
+                // ALLOW-HEX: const-required shadow tint, not a themed surface color
                 color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
@@ -36,10 +53,10 @@ class SocialSignInButtons extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.button),
               onTap: isLoading ? null : () => _handleGoogleSignIn(context),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: Space.lg),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -48,21 +65,20 @@ class SocialSignInButtons extends StatelessWidget {
                       height: 24,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(4),
-                        color: Colors.white,
+                        color: _SocialBrand.googleSurface,
                       ),
                       child: const Icon(
                         Icons.g_mobiledata,
                         size: 20,
-                        color: Colors.red,
+                        color: _SocialBrand.googleGlyph,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Space.md),
                     Text(
                       'Continue with Google',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: context.typo.body.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1F2937),
+                        color: _SocialBrand.googleLabel,
                       ),
                     ),
                   ],
@@ -71,19 +87,21 @@ class SocialSignInButtons extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        
-        // Apple Sign-In Button
-        if (Theme.of(context).platform == TargetPlatform.iOS || 
+        const SizedBox(height: Space.lg),
+
+        // Apple Sign-In Button. Fill/label colors are Apple
+        // brand-mandated (see _SocialBrand) and are not tokenized.
+        if (Theme.of(context).platform == TargetPlatform.iOS ||
             Theme.of(context).platform == TargetPlatform.macOS)
           Container(
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              color: const Color(0xFF000000),
-              borderRadius: BorderRadius.circular(12),
+              color: _SocialBrand.appleSurface,
+              borderRadius: BorderRadius.circular(Radii.button),
               boxShadow: [
                 BoxShadow(
+                  // ALLOW-HEX: const-required shadow tint, not a themed surface color
                   color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
@@ -93,25 +111,24 @@ class SocialSignInButtons extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.button),
                 onTap: isLoading ? null : () => _handleAppleSignIn(context),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: Space.lg),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
                         Icons.apple,
                         size: 24,
-                        color: Colors.white,
+                        color: _SocialBrand.appleLabel,
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      const SizedBox(width: Space.md),
+                      Text(
                         'Continue with Apple',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: context.typo.body.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: _SocialBrand.appleLabel,
                         ),
                       ),
                     ],
@@ -149,14 +166,18 @@ class SocialSignInButtons extends StatelessWidget {
           errorMessage = 'Google Sign-In not configured properly. Please contact support.';
         }
         
+        final tokens = context.tokens;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: tokens.onDanger),
+            ),
+            backgroundColor: tokens.danger,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 5),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.button),
             ),
           ),
         );
@@ -182,17 +203,21 @@ class SocialSignInButtons extends StatelessWidget {
           errorMessage = 'Network error. Please check your connection';
         }
         
+        final tokens = context.tokens;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: tokens.onDanger),
+            ),
+            backgroundColor: tokens.danger,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.button),
             ),
           ),
         );
       }
     }
   }
-} 
+}
