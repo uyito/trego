@@ -144,6 +144,13 @@ void main() {
       expect(find.byType(ProgressScreen), findsOneWidget);
       expect(find.text('Run History'), findsOneWidget);
       expect(find.text('Analytics'), findsOneWidget);
+
+      // TrackerDashboardScreen's Run History tab now builds successfully
+      // (it no longer crashes in initState), which reaches RunService's
+      // singleton constructor. That constructor schedules a
+      // Future.delayed(500ms) health-init call; flush it so no Timer is
+      // left pending when the test ends (flutter_test asserts on that).
+      await tester.pump(const Duration(milliseconds: 600));
     });
   });
 

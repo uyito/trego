@@ -7,6 +7,19 @@ import 'package:trego/achievements/achievement_service.dart';
 import 'package:trego/tracker/weekly_recap_widget.dart';
 import 'package:trego/tracker/run_service.dart';
 import 'dart:async';
+import '../shared/theme/context_tokens.dart';
+import '../shared/theme/trego_tokens.dart';
+
+/// Macro/status accent colors with no dedicated token role (calorie, water,
+/// distance category tags and the achievement-gold accent). Centralized
+/// here rather than scattered as literals through the widget tree.
+class _TrackerMacroColors {
+  static const calories = Color(0xFFFF9800); // ALLOW-HEX: calorie-tracking category accent, no token role
+  static const water = Color(0xFF2196F3); // ALLOW-HEX: water-tracking category accent, no token role
+  static const distance = Color(0xFF00C851); // ALLOW-HEX: distance-tracking category accent, no token role
+  static const achievementGold = Color(0xFFFFD700); // ALLOW-HEX: achievement-gold accent, no token role
+  _TrackerMacroColors._();
+}
 
 class TrackerDashboardScreen extends StatefulWidget {
   const TrackerDashboardScreen({super.key});
@@ -43,8 +56,14 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
   void initState() {
     super.initState();
     _currentDate = _getCurrentDate();
-    _userId = AuthService().currentUser?.uid;
-    
+    try {
+      _userId = AuthService().currentUser?.uid;
+    } catch (_) {
+      // Auth unavailable (e.g. Firebase not configured in this context);
+      // treat as signed-out.
+      _userId = null;
+    }
+
     // Initialize animations
     _caloriesAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
@@ -212,6 +231,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
   Future<void> _saveData() async {
     if (_userId == null) return;
 
+    final tokens = context.tokens;
     try {
       final calories = int.tryParse(_caloriesController.text) ?? 0;
       final weight = double.tryParse(_weightController.text);
@@ -231,16 +251,16 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Data saved successfully!'),
-          backgroundColor: Color(0xFF00C851),
+        SnackBar(
+          content: const Text('Data saved successfully!'),
+          backgroundColor: tokens.success,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving data: $e'),
-          backgroundColor: const Color(0xFFE31E24),
+          backgroundColor: tokens.danger,
         ),
       );
     }
@@ -249,6 +269,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
   Future<void> _resetWeek() async {
     if (_userId == null) return;
 
+    final tokens = context.tokens;
     try {
       final now = DateTime.now();
       final weekStart = now.subtract(Duration(days: now.weekday - 1));
@@ -278,16 +299,16 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Week reset successfully!'),
-          backgroundColor: Color(0xFF00C851),
+        SnackBar(
+          content: const Text('Week reset successfully!'),
+          backgroundColor: tokens.success,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error resetting week: $e'),
-          backgroundColor: const Color(0xFFE31E24),
+          backgroundColor: tokens.danger,
         ),
       );
     }
@@ -314,9 +335,10 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final runService = RunService.instance;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: tokens.canvas,
       body: StreamBuilder<bool>(
         stream: runService.isRunningStream,
         initialData: runService.isRunning,
@@ -327,9 +349,9 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
               if (isRunActive) _ActiveRunBanner(),
               Expanded(
                 child: _isLoading
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFFE31E24),
+                          color: tokens.brand,
                         ),
                       )
                     : CustomScrollView(
@@ -337,21 +359,21 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                           // Hero Section
                           SliverToBoxAdapter(
                             child: Container(
-                              margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                              padding: const EdgeInsets.all(24),
+                              margin: const EdgeInsets.fromLTRB(Space.lg, Space.sm, Space.lg, Space.lg),
+                              padding: const EdgeInsets.all(Space.xl),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
+                                gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    Color(0xFFE31E24),
-                                    Color(0xFFC62828),
+                                    tokens.brandContainerStart,
+                                    tokens.brandContainerEnd,
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFE31E24).withValues(alpha: 0.3),
+                                    color: tokens.brand.withValues(alpha: 0.3),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -362,32 +384,31 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.local_fire_department_rounded,
-                                        color: Colors.white,
+                                        color: tokens.onBrand,
                                         size: 32,
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: Space.md),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              _workoutStreak > 0 
+                                              _workoutStreak > 0
                                                   ? '🔥 $_workoutStreak-Day Streak'
                                                   : '🔥 Start Your Streak',
-                                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
+                                              style: context.typo.title.copyWith(
+                                                color: tokens.onBrand,
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
+                                            const SizedBox(height: Space.xs),
                                             Text(
-                                              _workoutStreak > 0 
+                                              _workoutStreak > 0
                                                   ? 'Keep the momentum going!'
                                                   : 'Begin your fitness journey today',
-                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                color: Colors.white.withValues(alpha: 0.9),
+                                              style: context.typo.body.copyWith(
+                                                color: tokens.onBrand.withValues(alpha: 0.9),
                                               ),
                                             ),
                                           ],
@@ -395,7 +416,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 20),
+                                  const SizedBox(height: Space.xl - Space.xs),
                                   Row(
                                     children: [
                                       Expanded(
@@ -403,7 +424,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                           icon: '📅',
                                           value: _getCurrentDate().split('-').last,
                                           label: 'Today',
-                                          color: Colors.white,
+                                          color: tokens.onBrand,
                                         ),
                                       ),
                                       Expanded(
@@ -411,7 +432,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                           icon: '🎯',
                                           value: _workoutCompleted ? '✓' : '○',
                                           label: 'Workout',
-                                          color: Colors.white,
+                                          color: tokens.onBrand,
                                         ),
                                       ),
                                     ],
@@ -428,11 +449,11 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
 
                           // Stats Cards
                           SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: Space.lg),
                             sliver: SliverList(
                               delegate: SliverChildListDelegate([
-                                const SizedBox(height: 8),
-                                
+                                const SizedBox(height: Space.sm),
+
                                 // Action Buttons
                                 Row(
                                   children: [
@@ -448,16 +469,16 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                         icon: const Icon(Icons.play_arrow_rounded),
                                         label: const Text('Live Run'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF00C851),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          backgroundColor: tokens.success,
+                                          foregroundColor: tokens.onSuccess,
+                                          padding: const EdgeInsets.symmetric(vertical: Space.lg),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(Radii.standardCard),
                                           ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 16),
+                                    const SizedBox(width: Space.lg),
                                     Expanded(
                                       child: ElevatedButton.icon(
                                         onPressed: () => Navigator.push(
@@ -469,20 +490,20 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                         icon: const Icon(Icons.insights_rounded),
                                         label: const Text('Weekly'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF1A1A1A),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          backgroundColor: tokens.ink,
+                                          foregroundColor: tokens.canvas,
+                                          padding: const EdgeInsets.symmetric(vertical: Space.lg),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(Radii.standardCard),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                
-                                const SizedBox(height: 24),
-                                
+
+                                const SizedBox(height: Space.xl),
+
                                 // Calories Card
                                 FadeTransition(
                                   opacity: _caloriesAnimation,
@@ -495,13 +516,13 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                     progress: _caloriesController.text.isEmpty 
                                         ? 0.0 
                                         : (int.tryParse(_caloriesController.text) ?? 0) / _calorieGoal,
-                                    color: const Color(0xFFFF9800),
+                                    color: _TrackerMacroColors.calories,
                                     onTap: () => _showCaloriesDialog(),
                                   ),
                                 ),
-                                
-                                const SizedBox(height: 16),
-                                
+
+                                const SizedBox(height: Space.lg),
+
                                 // Water Card
                                 FadeTransition(
                                   opacity: _waterAnimation,
@@ -512,13 +533,13 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                     value: _waterCups.toString(),
                                     goal: '8',
                                     progress: _waterCups / 8.0,
-                                    color: const Color(0xFF2196F3),
+                                    color: _TrackerMacroColors.water,
                                     onTap: () => _showWaterDialog(),
                                   ),
                                 ),
-                                
-                                const SizedBox(height: 16),
-                                
+
+                                const SizedBox(height: Space.lg),
+
                                 // Distance Card
                                 FadeTransition(
                                   opacity: _distanceAnimation,
@@ -531,49 +552,47 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                     progress: _distanceController.text.isEmpty 
                                         ? 0.0 
                                         : (double.tryParse(_distanceController.text) ?? 0.0) / 5.0,
-                                    color: const Color(0xFF00C851),
+                                    color: _TrackerMacroColors.distance,
                                     onTap: () => _showDistanceDialog(),
                                   ),
                                 ),
-                                
-                                const SizedBox(height: 24),
-                                
+
+                                const SizedBox(height: Space.xl),
+
                                 // Achievement Progress Section
                                 Card(
                                   child: Padding(
-                                    padding: const EdgeInsets.all(20),
+                                    padding: const EdgeInsets.all(Space.xl - Space.xs),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.all(12),
+                                              padding: const EdgeInsets.all(Space.md),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFFFD700).withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(12),
+                                                color: _TrackerMacroColors.achievementGold.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(Radii.statTile),
                                               ),
                                               child: const Icon(
                                                 Icons.emoji_events_rounded,
-                                                color: Color(0xFFFFD700),
+                                                color: _TrackerMacroColors.achievementGold,
                                                 size: 24,
                                               ),
                                             ),
-                                            const SizedBox(width: 16),
+                                            const SizedBox(width: Space.lg),
                                             Expanded(
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     'Achievements',
-                                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
+                                                    style: context.typo.titleSmall,
                                                   ),
                                                   Text(
                                                     'Track your progress',
-                                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                      color: const Color(0xFF666666),
+                                                    style: context.typo.bodySmall.copyWith(
+                                                      color: tokens.inkMuted,
                                                     ),
                                                   ),
                                                 ],
@@ -581,7 +600,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 16),
+                                        const SizedBox(height: Space.lg),
                                         FutureBuilder<List<dynamic>>(
                                           future: _loadAchievementProgress(),
                                           builder: (context, snapshot) {
@@ -589,32 +608,33 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                               return Column(
                                                 children: snapshot.data!.take(3).map((achievement) {
                                                   return Padding(
-                                                    padding: const EdgeInsets.only(bottom: 12),
+                                                    padding: const EdgeInsets.only(bottom: Space.md),
                                                     child: Row(
                                                       children: [
                                                         Icon(
                                                           achievement['earned'] ? Icons.emoji_events_rounded : Icons.lock_rounded,
-                                                          color: achievement['earned'] ? const Color(0xFFFFD700) : Colors.grey,
+                                                          color: achievement['earned']
+                                                              ? _TrackerMacroColors.achievementGold
+                                                              : tokens.inkMuted,
                                                           size: 20,
                                                         ),
-                                                        const SizedBox(width: 12),
+                                                        const SizedBox(width: Space.md),
                                                         Expanded(
                                                           child: Column(
                                                             crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
                                                               Text(
                                                                 achievement['title'],
-                                                                style: TextStyle(
+                                                                style: context.typo.body.copyWith(
                                                                   fontWeight: FontWeight.w600,
-                                                                  color: achievement['earned'] ? Colors.black : Colors.grey,
+                                                                  color: achievement['earned'] ? tokens.ink : tokens.inkMuted,
                                                                 ),
                                                               ),
                                                               if (!achievement['earned'])
                                                                 Text(
                                                                   '${achievement['progress']} - ${achievement['description']}',
-                                                                  style: const TextStyle(
-                                                                    fontSize: 12,
-                                                                    color: Colors.grey,
+                                                                  style: context.typo.bodySmall.copyWith(
+                                                                    color: tokens.inkMuted,
                                                                   ),
                                                                 ),
                                                             ],
@@ -626,11 +646,11 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                                 }).toList(),
                                               );
                                             } else {
-                                              return const Padding(
-                                                padding: EdgeInsets.all(16),
+                                              return Padding(
+                                                padding: const EdgeInsets.all(Space.lg),
                                                 child: Text(
                                                   'Loading achievements...',
-                                                  style: TextStyle(color: Colors.grey),
+                                                  style: context.typo.body.copyWith(color: tokens.inkMuted),
                                                   textAlign: TextAlign.center,
                                                 ),
                                               );
@@ -642,7 +662,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                                   ),
                                 ),
                                 
-                                const SizedBox(height: 40),
+                                const SizedBox(height: Space.xxl + Space.xs * 2),
                               ]),
                             ),
                           ),
@@ -668,17 +688,16 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
           icon,
           style: const TextStyle(fontSize: 24),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         Text(
           value,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+          style: context.typo.stat.copyWith(
             color: color,
-            fontWeight: FontWeight.w900,
           ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          style: context.typo.bodySmall.copyWith(
             color: color.withValues(alpha: 0.9),
           ),
         ),
@@ -696,21 +715,22 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
     required Color color,
     required VoidCallback onTap,
   }) {
+    final tokens = context.tokens;
     return GestureDetector(
       onTap: onTap,
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(Space.xl - Space.xs),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(Space.md),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.statTile),
                     ),
                     child: Icon(
                       icon,
@@ -718,21 +738,19 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                       size: 24,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: Space.lg),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: context.typo.titleSmall,
                         ),
                         Text(
                           subtitle,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF666666),
+                          style: context.typo.bodySmall.copyWith(
+                            color: tokens.inkMuted,
                           ),
                         ),
                       ],
@@ -743,22 +761,21 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                     children: [
                       Text(
                         value,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
+                        style: context.typo.title.copyWith(
                           color: color,
                         ),
                       ),
                       Text(
                         'of $goal',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF666666),
+                        style: context.typo.bodySmall.copyWith(
+                          color: tokens.inkMuted,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -767,18 +784,17 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                     children: [
                       Text(
                         'Progress',
-                        style: Theme.of(context).textTheme.labelMedium,
+                        style: context.typo.label.copyWith(color: tokens.inkMuted),
                       ),
                       Text(
                         '${(progress * 100).toInt()}%',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        style: context.typo.label.copyWith(
                           color: color,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Space.sm),
                   LinearProgressIndicator(
                     value: progress.clamp(0.0, 1.0),
                     backgroundColor: color.withValues(alpha: 0.1),
@@ -800,26 +816,27 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
     required String label,
     required VoidCallback onTap,
   }) {
+    final tokens = context.tokens;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Space.lg),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E5E5)),
+          color: tokens.surfaceSunken,
+          borderRadius: BorderRadius.circular(Radii.statTile),
+          border: Border.all(color: tokens.border),
         ),
         child: Column(
           children: [
             Icon(
               icon,
-              color: const Color(0xFF1A1A1A),
+              color: tokens.ink,
               size: 24,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Space.sm),
             Text(
               label,
-              style: Theme.of(context).textTheme.labelMedium,
+              style: context.typo.label.copyWith(color: tokens.inkMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -866,8 +883,8 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Current: $_waterCups cups'),
-            const SizedBox(height: 16),
+            Text('Current: $_waterCups cups', style: context.typo.body),
+            const SizedBox(height: Space.lg),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -881,7 +898,7 @@ class _TrackerDashboardScreenState extends State<TrackerDashboardScreen>
                 ),
                 Text(
                   '$_waterCups',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: context.typo.stat,
                 ),
                 IconButton(
                   onPressed: () {
@@ -1049,8 +1066,9 @@ class _ActiveRunBannerState extends State<_ActiveRunBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Material(
-      color: const Color(0xFFE31E24),
+      color: tokens.brand,
       elevation: 4,
       child: InkWell(
         onTap: () {
@@ -1062,37 +1080,37 @@ class _ActiveRunBannerState extends State<_ActiveRunBanner> {
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: Space.xl - Space.xs, vertical: Space.md),
           child: Row(
             children: [
-              const Icon(Icons.directions_run_rounded, color: Colors.white),
-              const SizedBox(width: 12),
+              Icon(Icons.directions_run_rounded, color: tokens.onBrand),
+              const SizedBox(width: Space.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Active Run', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text('Active Run', style: context.typo.titleSmall.copyWith(color: tokens.onBrand)),
                     Text(
                       '${_formatDuration(_duration)}   |   ${_distance.toStringAsFixed(2)} km',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: context.typo.bodySmall.copyWith(color: tokens.onBrand.withValues(alpha: 0.7)),
                     ),
                   ],
                 ),
               ),
               if (_isPaused)
                 IconButton(
-                  icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                  icon: Icon(Icons.play_arrow_rounded, color: tokens.onBrand),
                   onPressed: () => _runService.resumeRun(),
                   tooltip: 'Resume',
                 )
               else
                 IconButton(
-                  icon: const Icon(Icons.pause_rounded, color: Colors.white),
+                  icon: Icon(Icons.pause_rounded, color: tokens.onBrand),
                   onPressed: () => _runService.pauseRun(),
                   tooltip: 'Pause',
                 ),
               IconButton(
-                icon: const Icon(Icons.stop_rounded, color: Colors.white),
+                icon: Icon(Icons.stop_rounded, color: tokens.onBrand),
                 onPressed: () async {
                   await _runService.stopRun();
                 },
