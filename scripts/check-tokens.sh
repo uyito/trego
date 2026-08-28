@@ -24,7 +24,8 @@ FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
   lib/social/screens/friends_screen.dart \
   lib/social/screens/challenges_screen.dart \
   lib/recipes/recipe_screen.dart \
-  lib/tdee/tdee_screen.dart"
+  lib/tdee/tdee_screen.dart \
+  lib/achievements/achievements_screen.dart"
 
 # Raw hex scan — ignore the tokens file itself (where the palette is defined)
 # and any line bearing an ALLOW-HEX marker.
