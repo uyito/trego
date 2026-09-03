@@ -32,12 +32,18 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
       vsync: this,
       initialIndex: widget.initialTab.clamp(0, 1),
     );
-    _loadData();
+    // Defer the first load until after the initial frame so setState and
+    // ScaffoldMessenger (used on error) run against a mounted, built widget
+    // rather than during initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadData();
+    });
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    
+
     try {
       final friends = await _socialService.getFriends();
       final requests = await _socialService.getFriendRequests();
@@ -53,7 +59,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
         );
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
