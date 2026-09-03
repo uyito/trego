@@ -22,7 +22,15 @@ void main() {
         child: RouteMap(polyline: [], autoFollow: false),
       ),
     ));
-    expect(find.byType(ColoredBox), findsOneWidget);
+    // Scope to RouteMap's own placeholder — the testApp harness (Material
+    // canvas) also renders a ColoredBox, so an unscoped finder matches 2.
+    expect(
+      find.descendant(
+        of: find.byType(RouteMap),
+        matching: find.byType(ColoredBox),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('accepts current position + polyline without errors', (tester) async {
