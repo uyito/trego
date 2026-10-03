@@ -13,14 +13,18 @@ import 'workout_service.dart';
 class ActivityPickerScreen extends StatelessWidget {
   final WorkoutService? service;
 
-  const ActivityPickerScreen({super.key, this.service});
+  /// When true the picker is hosted inside another screen (e.g. a tab in
+  /// WorkoutHub) and renders without its own app bar.
+  final bool embedded;
+
+  const ActivityPickerScreen({super.key, this.service, this.embedded = false});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final typo = context.typo;
     return TregoScaffold(
-      appBar: const TregoAppBar(title: 'Log activity'),
+      appBar: embedded ? null : const TregoAppBar(title: 'Log Activity'),
       body: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: Space.xl),
           child: Column(

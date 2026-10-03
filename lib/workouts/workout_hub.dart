@@ -51,7 +51,7 @@ class _WorkoutHubState extends State<WorkoutHub> with TickerProviderStateMixin {
       body: TabBarView(
         controller: _tabController,
         children: const [
-          ActivityPickerScreen(),
+          ActivityPickerScreen(embedded: true),
           WorkoutPlanScreen(),
         ],
       ),
