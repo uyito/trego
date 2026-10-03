@@ -47,6 +47,24 @@ void main() {
     expect(find.byIcon(Icons.notifications), findsOneWidget);
   });
 
+  testWidgets('bottom slot renders when provided and extends preferredSize', (tester) async {
+    const bottom = PreferredSize(
+      preferredSize: Size.fromHeight(48),
+      child: SizedBox(key: Key('bar-bottom'), height: 48),
+    );
+    const bar = TregoAppBar(title: 'X', bottom: bottom);
+    expect(bar.preferredSize.height, 56 + 48);
+    await tester.pumpWidget(_wrap(bar));
+    expect(find.byKey(const Key('bar-bottom')), findsOneWidget);
+    expect(find.text('X'), findsOneWidget);
+  });
+
+  testWidgets('no bottom when omitted', (tester) async {
+    await tester.pumpWidget(_wrap(const TregoAppBar(title: 'X')));
+    expect(find.byKey(const Key('bar-bottom')), findsNothing);
+    expect(find.byType(TabBar), findsNothing);
+  });
+
   testWidgets('asserts title XOR greeting', (tester) async {
     expect(() => TregoAppBar(title: 'X', greeting: 'Y'), throwsAssertionError);
     expect(() => TregoAppBar(), throwsAssertionError);

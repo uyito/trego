@@ -8,19 +8,26 @@ class TregoAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? subtitle;
   final List<Widget>? trailing;
 
+  /// Optional widget rendered beneath the header row (e.g. a [TabBar]).
+  /// Its height is added to [preferredSize].
+  final PreferredSizeWidget? bottom;
+
   const TregoAppBar({
     super.key,
     this.title,
     this.greeting,
     this.subtitle,
     this.trailing,
+    this.bottom,
   }) : assert(
           (title == null) != (greeting == null),
           'Provide exactly one of title OR greeting',
         );
 
   @override
-  Size get preferredSize => Size.fromHeight(greeting != null ? 72 : 56);
+  Size get preferredSize => Size.fromHeight(_headerHeight + (bottom?.preferredSize.height ?? 0));
+
+  double get _headerHeight => greeting != null ? 72 : 56;
 
   @override
   Widget build(BuildContext context) {
@@ -29,18 +36,24 @@ class TregoAppBar extends StatelessWidget implements PreferredSizeWidget {
       color: tokens.surfaceSunken,
       child: SafeArea(
         bottom: false,
-        child: SizedBox(
-          height: preferredSize.height,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-            child: Row(
-              children: [
-                Expanded(child: _buildLeading(context)),
-                if (trailing != null)
-                  Row(mainAxisSize: MainAxisSize.min, children: trailing!),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: _headerHeight,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Space.lg),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildLeading(context)),
+                    if (trailing != null)
+                      Row(mainAxisSize: MainAxisSize.min, children: trailing!),
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (bottom != null) bottom!,
+          ],
         ),
       ),
     );
