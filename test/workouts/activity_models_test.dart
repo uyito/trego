@@ -41,4 +41,16 @@ void main() {
     expect(s.distance, 10.0);
     expect(s.avgPace, 330.0);
   });
+
+  test('fromJson parses startTime, falls back to createdAt, else null', () {
+    final base = {'activityType': 'running', 'logKind': 'duration'};
+    final a = ActivitySession.fromJson({
+      ...base, 'startTime': '2026-03-04T10:00:00.000Z', 'createdAt': '2026-03-05T10:00:00.000Z'});
+    expect(a.createdAt, DateTime.parse('2026-03-04T10:00:00.000Z'));
+    final b = ActivitySession.fromJson({...base, 'createdAt': '2026-03-05T10:00:00.000Z'});
+    expect(b.createdAt, DateTime.parse('2026-03-05T10:00:00.000Z'));
+    expect(ActivitySession.fromJson(base).createdAt, isNull);
+    expect(ActivitySession.fromJson({...base, 'createdAt': 'garbage'}).createdAt, isNull);
+    expect(a.toLogPayload().containsKey('createdAt'), isFalse);
+  });
 }

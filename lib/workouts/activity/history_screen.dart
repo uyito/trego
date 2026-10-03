@@ -56,9 +56,16 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
           volume += (set.reps ?? 0) * (set.weight ?? 0);
         }
       }
-      return '${_num(volume)} kg';
+      if (volume > 0) return '${_num(volume)} kg';
+      return s.duration != null ? '${s.duration} min' : '';
     }
     return s.duration != null ? '${s.duration} min' : '';
+  }
+
+  String _date(ActivitySession s) {
+    final d = s.createdAt?.toLocal();
+    if (d == null) return '';
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
   String _num(double v) =>
@@ -103,6 +110,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   Widget _buildRow(ActivitySession s) {
     final tokens = context.tokens;
     final metric = _metric(s);
+    final date = _date(s);
     return Card(
       color: tokens.surface,
       margin: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.xs),
@@ -112,8 +120,10 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
       ),
       child: ListTile(
         title: Text(_name(s), style: context.typo.titleSmall),
-        subtitle: s.sessionName != null
-            ? Text(s.sessionName!,
+        subtitle: (s.sessionName != null || date.isNotEmpty)
+            ? Text(
+                [if (s.sessionName != null) s.sessionName!, if (date.isNotEmpty) date]
+                    .join(' · '),
                 style: context.typo.bodySmall.copyWith(color: tokens.inkMuted))
             : null,
         trailing: metric.isEmpty ? null : Text(metric, style: context.typo.titleSmall),
