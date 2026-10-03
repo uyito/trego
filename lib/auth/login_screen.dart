@@ -224,24 +224,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildSocialSignIn(BuildContext context) {
-    // AuthService() touches FirebaseAuth.instance on first access; guard so
-    // the screen still renders in Firebase-less test hosts. In production
-    // Firebase is always initialized before this screen mounts, so this
-    // catch never triggers there.
-    try {
-      return SocialSignInButtons(
-        authService: _authService,
-        onSuccess: () {
-          // AppStateProvider flips to isAuthenticated=true after
-          // AuthService.signIn completes; TregoApp's Consumer2
-          // then swaps in AppShell. Just pop the auth route.
-          Navigator.pop(context);
-        },
-        isLoading: _isLoading,
-      );
-    } catch (_) {
-      return const SizedBox.shrink();
-    }
+    return SocialSignInButtons(
+      onSuccess: () {
+        // AppStateProvider flips to isAuthenticated=true after
+        // AuthService.signIn completes; TregoApp's Consumer2
+        // then swaps in AppShell. Just pop the auth route.
+        Navigator.pop(context);
+      },
+      isLoading: _isLoading,
+    );
   }
 
   Future<void> _handleLogin() async {
