@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'simple_workout_tracker.dart';
+import 'activity/activity_picker_screen.dart';
 import 'workout_plan_screen.dart';
 
 class WorkoutHub extends StatefulWidget {
@@ -38,8 +38,8 @@ class _WorkoutHubState extends State<WorkoutHub> with TickerProviderStateMixin {
           unselectedLabelColor: Colors.white70,
           tabs: const [
             Tab(
-              icon: Icon(Icons.timer),
-              text: 'Quick Workout',
+              icon: Icon(Icons.add),
+              text: 'Log Activity',
             ),
             Tab(
               icon: Icon(Icons.fitness_center),
@@ -51,7 +51,7 @@ class _WorkoutHubState extends State<WorkoutHub> with TickerProviderStateMixin {
       body: TabBarView(
         controller: _tabController,
         children: const [
-          SimpleWorkoutTracker(),
+          ActivityPickerScreen(),
           WorkoutPlanScreen(),
         ],
       ),
