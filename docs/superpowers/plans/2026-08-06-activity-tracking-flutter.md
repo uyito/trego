@@ -14,9 +14,10 @@
 - `WorkoutService` takes an optional `ApiClient` ctor param defaulting to `ApiClient.instance` (mirror `PushApi`). `ApiClient.get/post` return a `Response` whose `.data` is the decoded JSON map; success is `response.data['success'] == true`.
 - Units: distance km, elevation m, weight kg. `duration` sent to the backend is **minutes** (backend derives pace from it).
 - `logKind` values (must match backend exactly): `strength`, `distanceCardio`, `sport`, `duration`.
-- `lib/workouts` is EXEMPT from `scripts/check-tokens.sh` — follow existing workout-screen styling (`Theme.of(context)`); do not block on token purity.
-- Widget tests that read `context.tokens` must wrap in `TregoTheme` (only if you use tokens; the exempt dir need not).
-- Keep the existing Flutter test suite green. The pre-existing 6 `notifications_screen_test.dart` failures are unrelated to this work (documented on `main`) — do not attempt to fix them here.
+- **RECONCILIATION (2026-10-03, post-redesign):** the whole app is now on the token design system and `AppTheme` is DELETED. All new `.dart` UI files here MUST be token-pure (`context.tokens`/`context.typo`/`Space`/`Radii`, the `widgets/core` kit; NO raw `Color(0x…)`, NO `Theme.of(context)` colors, NO `AppTheme`), and each new UI file MUST be added to `scripts/check-tokens.sh`'s `FORBIDDEN_DIRS`. Follow the idiom in a migrated screen such as `lib/social/screens/challenges_screen.dart` or `lib/recipes/recipe_screen.dart`. Decorative/categorical colors with no token role → a named `const` with `// ALLOW-HEX: <reason>`.
+- Widget tests pump under the repo's `testApp()`/`TregoTheme` harness (see `test/helpers/test_app.dart`); mirror an existing `test/` widget test.
+- Current integration state (confirmed): `SimpleWorkoutTracker` + `WorkoutHub` still exist as this plan assumes (WorkoutHub is reachable from Home's "Training" entry); the center ⏺ Record button opens `RecordFlow` (live GPS) and stays SEPARATE from this manual multi-sport logging — do not touch it.
+- Keep the Flutter test suite green (it is currently 100% green — 0 failures). Do not introduce any failure.
 
 ---
 
