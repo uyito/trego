@@ -37,6 +37,7 @@ FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
   lib/notifications/widgets/notification_badge.dart \
   lib/workouts/workout_plan_screen.dart \
   lib/workouts/workout_screen.dart \
+  lib/workouts/activity/widgets/rest_timer.dart \
   lib/tracker/weekly_recap_widget.dart \
   lib/tracker/weekly_summary_screen.dart"
 
