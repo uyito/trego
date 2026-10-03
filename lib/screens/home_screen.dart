@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../achievements/achievement_model.dart';
+import '../achievements/achievement_service.dart';
 import '../achievements/achievements_screen.dart';
+import '../auth/auth_service.dart';
 import '../metrics/metrics_provider.dart';
 import '../metrics/widgets/goal_edit_dialog.dart';
 import '../metrics/widgets/goal_progress_card.dart';
@@ -99,7 +102,7 @@ class HomeScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const AchievementsScreen()),
               ),
             ),
-            const _AchievementsPreview(),
+            const HomeAchievementsPreview(),
             SectionHead(
               label: 'Friends',
               trailingLabel: 'See all →',
@@ -336,38 +339,100 @@ class _QuickLinkCard extends StatelessWidget {
   }
 }
 
-/// Compact horizontal strip of badge teasers; tapping any card (or the
-/// "See all" trailing above it) opens the full [AchievementsScreen].
-class _AchievementsPreview extends StatelessWidget {
-  const _AchievementsPreview();
+/// Loads the signed-in user's achievements. Injectable for tests.
+typedef AchievementsLoader = Future<List<Achievement>> Function();
 
-  static const _badges = [
-    (Icons.local_fire_department, 'Streak'),
-    (Icons.emoji_events, 'First 5K'),
-    (Icons.bolt, 'Fast Pace'),
-  ];
+Future<List<Achievement>> _defaultAchievementsLoader() async {
+  final uid = AuthService().currentUser?.uid;
+  if (uid == null) return const [];
+  return AchievementService().getUserAchievements(uid);
+}
+
+/// Compact horizontal strip of the user's first earned badges (max 3), or an
+/// encouraging empty state; tapping opens the full [AchievementsScreen].
+class HomeAchievementsPreview extends StatefulWidget {
+  final AchievementsLoader? loader;
+
+  const HomeAchievementsPreview({super.key, this.loader});
+
+  @override
+  State<HomeAchievementsPreview> createState() =>
+      _HomeAchievementsPreviewState();
+}
+
+class _HomeAchievementsPreviewState extends State<HomeAchievementsPreview> {
+  List<Achievement>? _earned;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    List<Achievement> earned;
+    try {
+      final all = await (widget.loader ?? _defaultAchievementsLoader)();
+      earned = all.where((a) => a.isEarned).take(3).toList();
+    } catch (_) {
+      // Firebase/auth unavailable or load failed: treat as nothing earned.
+      earned = const [];
+    }
+    if (!mounted) return;
+    setState(() => _earned = earned);
+  }
+
+  void _open(BuildContext context) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+      );
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final typo = context.typo;
+    final earned = _earned;
+    if (earned == null) return const SizedBox(height: 92);
+    if (earned.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Space.md),
+        child: Material(
+          color: tokens.surface,
+          borderRadius: BorderRadius.circular(Radii.compactCard),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(Radii.compactCard),
+            onTap: () => _open(context),
+            child: Container(
+              height: 92,
+              width: double.infinity,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: tokens.border),
+                borderRadius: BorderRadius.circular(Radii.compactCard),
+              ),
+              child: Text(
+                'No badges yet \u2014 keep moving!',
+                style: typo.bodySmall.copyWith(color: tokens.ink),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 92,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: Space.md),
-        itemCount: _badges.length,
+        itemCount: earned.length,
         separatorBuilder: (_, __) => const SizedBox(width: Space.sm),
         itemBuilder: (context, i) {
-          final (icon, label) = _badges[i];
+          final badge = earned[i];
           return Material(
             color: tokens.surface,
             borderRadius: BorderRadius.circular(Radii.compactCard),
             child: InkWell(
               borderRadius: BorderRadius.circular(Radii.compactCard),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AchievementsScreen()),
-              ),
+              onTap: () => _open(context),
               child: Container(
                 width: 84,
                 padding: const EdgeInsets.all(Space.sm),
@@ -378,10 +443,10 @@ class _AchievementsPreview extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(icon, color: tokens.brand),
+                    Text(badge.icon, style: typo.bodySmall),
                     const SizedBox(height: Space.xs),
                     Text(
-                      label,
+                      badge.title,
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
