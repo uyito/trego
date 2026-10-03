@@ -48,12 +48,13 @@ class ActivitySession {
   int? duration, perceivedExertion;
   double? distance, elevationGain, avgPace;
   List<ExerciseLog> exercises;
+  DateTime? createdAt;
 
   ActivitySession({
     this.id, required this.activityType, required this.logKind,
     this.sessionName, this.notes, this.stroke, this.duration,
     this.perceivedExertion, this.distance, this.elevationGain, this.avgPace,
-    this.exercises = const [],
+    this.exercises = const [], this.createdAt,
   });
 
   Map<String, dynamic> toLogPayload() {
@@ -84,5 +85,9 @@ class ActivitySession {
         exercises: ((j['exercises'] as List?) ?? const [])
             .map((e) => ExerciseLog.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
+        createdAt: _parseDate(j['startTime']) ?? _parseDate(j['createdAt']),
       );
+
+  static DateTime? _parseDate(Object? v) =>
+      v is String ? DateTime.tryParse(v) : null;
 }

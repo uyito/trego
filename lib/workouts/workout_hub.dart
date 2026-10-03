@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'activity/activity_picker_screen.dart';
+import 'activity/history_screen.dart';
+import 'activity/prs_screen.dart';
 import 'workout_plan_screen.dart';
 
 class WorkoutHub extends StatefulWidget {
@@ -31,6 +33,22 @@ class _WorkoutHubState extends State<WorkoutHub> with TickerProviderStateMixin {
         title: const Text('Workouts'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'History',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WorkoutHistoryScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.emoji_events),
+            tooltip: 'Personal records',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PRsScreen()),
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
