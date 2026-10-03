@@ -37,6 +37,14 @@ FORBIDDEN_DIRS="lib/widgets/core lib/navigation lib/screens lib/shared/theme \
   lib/notifications/widgets/notification_badge.dart \
   lib/workouts/workout_plan_screen.dart \
   lib/workouts/workout_screen.dart \
+  lib/workouts/activity/widgets/rest_timer.dart \
+  lib/workouts/activity/widgets/activity_field.dart \
+  lib/workouts/activity/widgets/cardio_form.dart \
+  lib/workouts/activity/widgets/strength_form.dart \
+  lib/workouts/activity/widgets/sport_form.dart \
+  lib/workouts/activity/widgets/duration_form.dart \
+  lib/workouts/activity/activity_picker_screen.dart \
+  lib/workouts/activity/log_activity_screen.dart \
   lib/tracker/weekly_recap_widget.dart \
   lib/tracker/weekly_summary_screen.dart"
 
