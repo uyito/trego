@@ -6,6 +6,7 @@ import 'package:trego/metrics/metrics_api_client.dart';
 import 'package:trego/metrics/metrics_models.dart';
 import 'package:trego/metrics/metrics_provider.dart';
 import 'package:trego/navigation/app_shell.dart';
+import 'package:trego/nutrition/nutrition_hub.dart';
 import 'package:trego/notifications/notifications_provider.dart';
 import 'package:trego/social/social_service.dart';
 import 'package:trego/providers/app_state_provider.dart';
@@ -151,6 +152,25 @@ void main() {
       expect(find.text('Plan'), findsNothing);
       expect(find.text('Home'), findsOneWidget);
       expect(find.byKey(const Key('shell-record-button')), findsOneWidget);
+    });
+  });
+
+  testWidgets('NutritionHub is built lazily, only after first selection',
+      (tester) async {
+    await _runIgnoringFirebaseErrors(() async {
+      await tester.pumpWidget(_wrap(const AppShell()));
+      await tester.pump();
+      // skipOffstage:false — IndexedStack builds hidden children offstage.
+      expect(find.byType(NutritionHub, skipOffstage: false), findsNothing);
+
+      await tester.tap(find.text('Nutrition'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NutritionHub), findsOneWidget);
+
+      // Stays alive after switching away.
+      await tester.tap(find.text('Home'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NutritionHub, skipOffstage: false), findsOneWidget);
     });
   });
 

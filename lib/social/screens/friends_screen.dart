@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/theme/context_tokens.dart';
 import '../../shared/theme/trego_tokens.dart';
+import '../../widgets/core/trego_app_bar.dart';
 import '../social_service.dart';
 
 class FriendsScreen extends StatefulWidget {
@@ -68,44 +69,23 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     final tokens = context.tokens;
     return Scaffold(
       backgroundColor: tokens.canvas,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(56 + 48),
-        child: Material(
-          color: tokens.surfaceSunken,
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 56,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text('Friends', style: context.typo.title),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.person_add, color: tokens.ink),
-                          onPressed: _showAddFriendDialog,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                TabBar(
-                  controller: _tabController,
-                  labelColor: tokens.brand,
-                  unselectedLabelColor: tokens.inkMuted,
-                  indicatorColor: tokens.brand,
-                  tabs: [
-                    Tab(text: 'Friends (${_friends.length})'),
-                    Tab(text: 'Requests (${_friendRequests.length})'),
-                  ],
-                ),
-              ],
-            ),
+      appBar: TregoAppBar(
+        title: 'Friends',
+        trailing: [
+          IconButton(
+            icon: Icon(Icons.person_add, color: tokens.ink),
+            onPressed: _showAddFriendDialog,
           ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: tokens.brand,
+          unselectedLabelColor: tokens.inkMuted,
+          indicatorColor: tokens.brand,
+          tabs: [
+            Tab(text: 'Friends (${_friends.length})'),
+            Tab(text: 'Requests (${_friendRequests.length})'),
+          ],
         ),
       ),
       body: TabBarView(

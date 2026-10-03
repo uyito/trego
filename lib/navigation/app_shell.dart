@@ -22,6 +22,10 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   TregoTab _current = TregoTab.home;
 
+  /// Nutrition (RecipeScreen -> Firestore) is built lazily on first visit so
+  /// it does no work at cold start; once built, IndexedStack keeps it alive.
+  bool _nutritionVisited = false;
+
   /// Lets the shell imperatively refresh the (kept-alive) feed on tab select.
   final GlobalKey<SocialFeedScreenState> _feedKey = GlobalKey();
   final GlobalKey<SocialHubScreenState> _socialHubKey = GlobalKey();
@@ -54,7 +58,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   void _switchTab(TregoTab tab) {
-    setState(() => _current = tab);
+    setState(() {
+      _current = tab;
+      if (tab == TregoTab.nutrition) _nutritionVisited = true;
+    });
     if (tab == TregoTab.home) {
       // No-op within the 5-min freshness window; fresh fetch otherwise.
       context.read<MetricsProvider>().refresh();
@@ -89,7 +96,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         index: index,
         children: [
           HomeScreen(onSwitchTab: _switchTab),
-          const NutritionHub(),
+          _nutritionVisited ? const NutritionHub() : const SizedBox.shrink(),
           SocialHubScreen(key: _socialHubKey, service: context.read<SocialService>(), feedKey: _feedKey),
           const YouScreen(),
         ],

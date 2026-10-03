@@ -15,17 +15,30 @@ class _SocialBrand {
   _SocialBrand._();
 }
 
-class SocialSignInButtons extends StatelessWidget {
-  final AuthService authService;
+class SocialSignInButtons extends StatefulWidget {
+  /// Optional injected service (tests / DI). Defaults to a real
+  /// [AuthService], constructed lazily on first sign-in tap so that merely
+  /// building the widget never touches Firebase.
+  final AuthService? authService;
   final VoidCallback? onSuccess;
   final bool isLoading;
 
   const SocialSignInButtons({
     super.key,
-    required this.authService,
+    this.authService,
     this.onSuccess,
     this.isLoading = false,
   });
+
+  @override
+  State<SocialSignInButtons> createState() => _SocialSignInButtonsState();
+}
+
+class _SocialSignInButtonsState extends State<SocialSignInButtons> {
+  late final AuthService authService = widget.authService ?? AuthService();
+
+  VoidCallback? get onSuccess => widget.onSuccess;
+  bool get isLoading => widget.isLoading;
 
   @override
   Widget build(BuildContext context) {

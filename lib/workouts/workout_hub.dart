@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../shared/theme/context_tokens.dart';
 import 'activity/activity_picker_screen.dart';
 import 'activity/history_screen.dart';
 import 'activity/prs_screen.dart';
@@ -28,11 +29,13 @@ class _WorkoutHubState extends State<WorkoutHub> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final typo = context.typo;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workouts'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+        title: Text('Workouts', style: typo.title.copyWith(color: tokens.onBrand)),
+        backgroundColor: tokens.brand,
+        foregroundColor: tokens.onBrand,
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -51,9 +54,11 @@ class _WorkoutHubState extends State<WorkoutHub> with TickerProviderStateMixin {
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          indicatorColor: tokens.onBrand,
+          labelColor: tokens.onBrand,
+          unselectedLabelColor: tokens.onBrand.withValues(alpha: 0.7),
+          labelStyle: typo.button,
+          unselectedLabelStyle: typo.button,
           tabs: const [
             Tab(
               icon: Icon(Icons.add),

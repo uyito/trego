@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:trego/achievements/achievement_model.dart';
 import 'package:trego/metrics/metrics_api_client.dart';
 import 'package:trego/metrics/metrics_models.dart';
 import 'package:trego/metrics/metrics_provider.dart';
@@ -191,5 +192,50 @@ void main() {
 
       expect(find.byType(WorkoutHub), findsOneWidget);
     });
+  });
+
+  Achievement ach(String id, String name, {bool earned = false}) => Achievement(
+        id: id,
+        title: name,
+        unit: 'km',
+        description: 'd',
+        icon: '*',
+        category: 'running',
+        requirement: 1,
+        isEarned: earned,
+      );
+
+  testWidgets('achievements preview shows real earned badges only',
+      (tester) async {
+    await tester.pumpWidget(_wrap(Scaffold(
+      body: HomeAchievementsPreview(
+        loader: () async => [
+          ach('a', 'Alpha', earned: true),
+          ach('b', 'Beta'),
+          ach('c', 'Gamma', earned: true),
+        ],
+      ),
+    )));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Alpha'), findsOneWidget);
+    expect(find.text('Gamma'), findsOneWidget);
+    expect(find.text('Beta'), findsNothing);
+    expect(find.text('Streak'), findsNothing);
+    expect(find.text('First 5K'), findsNothing);
+    expect(find.text('Fast Pace'), findsNothing);
+  });
+
+  testWidgets('achievements preview shows empty state when none earned',
+      (tester) async {
+    await tester.pumpWidget(_wrap(Scaffold(
+      body: HomeAchievementsPreview(
+        loader: () async => [ach('b', 'Beta')],
+      ),
+    )));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('No badges yet \u2014 keep moving!'), findsOneWidget);
+    expect(find.text('Beta'), findsNothing);
   });
 }
